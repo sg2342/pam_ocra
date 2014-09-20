@@ -9,7 +9,7 @@ RFC6287 (OCRA) pam module
 
 * Basic Use
 
-ocra_tool -f ~foobar/.ocra -s OCRA-1:HOTP-SHA1-6:C-QN08-PSHA1 \
+    ocra_tool init -f ~foobar/.ocra -s OCRA-1:HOTP-SHA1-6:C-QN08-PSHA1 \
               -k 1122334455667788990011223344556677889900 -c 1 -w 42 -p 2342
 
 will create the ocra db file ".ocra" in the home directory of user "foobar";
