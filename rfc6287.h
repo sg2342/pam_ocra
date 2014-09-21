@@ -17,14 +17,14 @@ const EVP_MD * evp_md(enum alg A);
 typedef struct ocra_suite_struct {
 	/* CryptoFunction */
 	enum alg hotp_alg;
-	int	hotp_trunc;
+	int	 hotp_trunc;
 	/* DataInput */
-	int	flags;
+	int	 flags;
 	enum fmt Q_fmt;
-	int	Q_l;
+	size_t	 Q_l;
 	enum alg P_alg;
-	int	S_l;
-	int	T_step;
+	size_t	 S_l;
+	int	 T_step;
 }	ocra_suite;
 
 int parse_num(

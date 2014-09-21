@@ -159,11 +159,14 @@ parse_datainput(ocra_suite * ocra, const char *in)
 	}
 	/* Snnn: optional */
 	if (token[0] == 'S') {
+		int tmp;
+
 		ocra->flags |= FL_S;
 		if ((4 != strlen(token)) ||
-		    (-1 == (ocra->S_l = parse_num(token + 1))) ||
-		    ((-1 > ocra->S_l) || (1000 < ocra->S_l)))
+		    (-1 == (tmp = parse_num(token + 1))) ||
+		    ((-1 > tmp) || (1000 < tmp)))
 			goto err;
+		ocra->S_l = tmp;
 		if (NULL == (token = strsep(&string, "-")))
 			goto done;
 	}
@@ -320,6 +323,14 @@ check_di_params(const ocra_suite * ocra, size_t key_l, const char *Q,
 		return 0;
 }
 
+static inline void
+st64be(uint8_t *p, uint64_t x)
+{
+	uint64_t y = htobe64(x);
+
+	memcpy(p, &y, sizeof(y));
+}
+
 static int
 verify(const ocra_suite * ocra, const uint8_t *key, size_t key_l,
     const uint8_t *buf, size_t buf_l, const char *resp)
@@ -366,7 +377,7 @@ verify_c(const ocra_suite * ocra, off_t C_off, const uint8_t *key, size_t key_l,
 
 	*next_C = C;
 	do {
-		((uint64_t *)(buf + C_off))[0] = htobe64(*next_C);
+		st64be(buf + C_off, *next_C);
 		(*next_C)++;
 		if (1 != (ret = verify(ocra, key, key_l, buf, buf_l, resp)))
 			break;
@@ -431,9 +442,9 @@ rfc6287_ocra(const ocra_suite * ocra, const char *suite_string,
 		return -4;
 
 	if (flags & FL_C)
-		((uint64_t *)CBE)[0] = htobe64(C);
+		st64be(CBE, C);
 	if (flags & FL_T)
-		((uint64_t *)TBE)[0] = htobe64(T);
+		st64be(TBE, T);
 
 	HMAC_CTX_init(&ctx);
 	if ((1 != HMAC_Init(&ctx, key, key_l, evp_md(ocra->hotp_alg))) ||
@@ -520,7 +531,7 @@ rfc6287_verify(const ocra_suite * ocra, const char *suite_string,
 		uint64_t TT;
 
 		for (TT = T - timestamp_offset; TT != T + timestamp_offset; TT++) {
-			((uint64_t *)(buf + T_off))[0] = htobe64(TT);
+			st64be(buf + T_off, TT);
 			if (flags & FL_C) {
 				if (1 != (ret = verify_c(ocra, C_off, key, key_l, C, buf, buf_l,
 				    resp, counter_window, next_C)))
@@ -544,7 +555,7 @@ out:
 int
 rfc6287_challenge(const ocra_suite * ocra, char **questions)
 {
-	int i;
+	uint32_t i;
 	uint8_t buf[64];
 
 	if (1 != RAND_bytes(buf, sizeof(buf)))

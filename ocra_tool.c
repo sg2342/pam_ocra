@@ -41,6 +41,8 @@
 
 #include "rfc6287.h"
 
+#define KEY(k, s) k.data = (void*)s; k.size = sizeof(s);
+
 static int
 pin_hash(const ocra_suite * ocra, const char *pin, uint8_t **P, size_t *P_l)
 {
@@ -67,7 +69,7 @@ pin_hash(const ocra_suite * ocra, const char *pin, uint8_t **P, size_t *P_l)
 static int
 key_from_hex(const ocra_suite * ocra, const char *key_string, uint8_t **key, size_t *key_l)
 {
-	int i;
+	uint32_t i;
 
 	*key_l = mdlen(ocra->hotp_alg);
 
@@ -124,7 +126,8 @@ cmd_help()
 static void
 cmd_info(int argc, char **argv)
 {
-	int ch, ret, i;
+	int ch, ret;
+	uint32_t i;
 	char *fname = NULL;
 	ocra_suite ocra;
 
@@ -152,8 +155,7 @@ cmd_info(int argc, char **argv)
 		errx(EX_OSERR, "dbopen() failed: %s", strerror(errno));
 
 
-	K.data = "suite";
-	K.size = sizeof("suite");
+	KEY(K, "suite");
 	if (0 != (ret = db->get(db, &K, &V, 0)))
 		errx(EX_OSERR, "db->get() failed: %s",
 		    (ret == 1) ? "key not in db" : strerror(errno));
@@ -162,8 +164,7 @@ cmd_info(int argc, char **argv)
 	if (0 != rfc6287_parse_suite(&ocra, V.data))
 		errx(EX_SOFTWARE, "rfc6287_parse_suite() failed");
 
-	K.data = "key";
-	K.size = sizeof("key");
+	KEY(K, "key");
 	if (0 != (ret = db->get(db, &K, &V, 0)))
 		errx(EX_OSERR, "db->get() failed: %s",
 		    (ret == 1) ? "key not in db" : strerror(errno));
@@ -176,23 +177,20 @@ cmd_info(int argc, char **argv)
 	printf("\n");
 
 	if (ocra.flags & FL_C) {
-		K.data = "C";
-		K.size = sizeof("C");
+		KEY(K, "C");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
 			    (ret == 1) ? "key not in db" : strerror(errno));
 		printf("counter:\t%d\n", ((int *)(V.data))[0]);
 
-		K.data = "counter_window";
-		K.size = sizeof("counter_window");
+		KEY(K, "counter_window");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
 			    (ret == 1) ? "key not in db" : strerror(errno));
 		printf("counter_window: %d\n", ((int *)(V.data))[0]);
 	}
 	if (ocra.flags & FL_P) {
-		K.data = "P";
-		K.size = sizeof("P");
+		KEY(K, "P");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
 			    (ret == 1) ? "key not in db" : strerror(errno));
@@ -205,8 +203,7 @@ cmd_info(int argc, char **argv)
 		printf("\n");
 	}
 	if (ocra.flags & FL_T) {
-		K.data = "timestamp_offset";
-		K.size = sizeof("timestamp_offset");
+		KEY(K, "timestamp_offset");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
 			    (ret == 1) ? "key not in db" : strerror(errno));
@@ -245,7 +242,7 @@ test_input(const ocra_suite * ocra, const char *suite_string,
 }
 
 static void
-write_db(const char *fname, const ocra_suite * ocra, const char *suite_string,
+write_db(const char *fname, const char *suite_string,
     const uint8_t *key, size_t key_l, uint64_t C, const uint8_t *P,
     size_t P_l, int counter_window, int timestamp_offset)
 {
@@ -259,43 +256,37 @@ write_db(const char *fname, const ocra_suite * ocra, const char *suite_string,
 	    0600, DB_BTREE, NULL)))
 		errx(EX_OSERR, "dbopen() failed: %s", strerror(errno));
 
-	K.data = "suite";
-	K.size = sizeof("suite");
+	KEY(K, "suite");
 	V.data = (void *)suite_string;
 	V.size = strlen(suite_string) + 1;
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
 
-	K.data = "key";
-	K.size = sizeof("key");
+	KEY(K, "key");
 	V.data = (void *)key;
 	V.size = key_l;
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
 
-	K.data = "C";
-	K.size = sizeof("C");
+	KEY(K, "C");
 	V.data = &C;
 	V.size = sizeof(C);
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
 
-	K.data = "P";
-	K.size = sizeof("P");
+	KEY(K, "V");
 	V.data = (void *)P;
 	V.size = P_l;
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
 
-	K.data = "counter_window";
-	K.size = sizeof("counter_window");
+	KEY(K, "counter_window");
 	V.data = &counter_window;
 	V.size = sizeof(counter_window);
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
 
-	K.data = "timestamp_offset";
-	K.size = sizeof("timestamp_offset");
+	KEY(K, "timestamp_offset");
 	V.data = &timestamp_offset;
 	V.size = sizeof(timestamp_offset);
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
@@ -411,7 +402,7 @@ cmd_init(int argc, char **argv)
 	test_input(&ocra, suite_string, key, key_l, C, P, P_l,
 	    counter_window, timestamp_offset);
 
-	write_db(fname, &ocra, suite_string, key, key_l, C, P, P_l,
+	write_db(fname, suite_string, key, key_l, C, P, P_l,
 	    counter_window, timestamp_offset);
 
 }

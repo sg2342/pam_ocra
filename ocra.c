@@ -36,8 +36,11 @@
 
 #include <openssl/evp.h>
 #include "rfc6287.h"
+#include "ocra.h"
 
-int
+#define KEY(k, s) k.data = (void*)s; k.size = sizeof(s);
+
+static int
 open_db(DB ** db, int flags, const char *path, const char *user_id)
 {
 	int r = PAM_SUCCESS;
@@ -75,9 +78,7 @@ challenge(const char *path, const char *user_id, char **questions)
 	if (PAM_SUCCESS != (r = open_db(&db, O_EXLOCK | O_RDONLY, path, user_id)))
 		return r;
 
-	K.data = "suite";
-	K.size = sizeof("suite");
-
+	KEY(K, "suite");
 	if (0 != (r = db->get(db, &K, &V, 0))) {
 		db->close(db);
 		return PAM_SERVICE_ERR;
@@ -116,14 +117,11 @@ verify(const char *path, const char *user_id, const char *questions,
 	memset(&K, 0, sizeof(K));
 	memset(&V, 0, sizeof(V));
 
-
 	r = open_db(&db, O_EXLOCK | O_RDWR, path, user_id);
 	if (PAM_SUCCESS != r)
 		return r;
 
-
-	K.data = "suite";
-	K.size = sizeof("suite");
+	KEY(K, "suite");
 	if (0 != db->get(db, &K, &V, 0)) {
 		r = PAM_SERVICE_ERR;
 		goto out;
@@ -138,8 +136,7 @@ verify(const char *path, const char *user_id, const char *questions,
 		r = PAM_SERVICE_ERR;
 		goto out;
 	}
-	K.data = "key";
-	K.size = sizeof("key");
+	KEY(K, "key");
 	if (0 != db->get(db, &K, &V, 0)) {
 		r = PAM_SERVICE_ERR;
 		goto out;
@@ -152,16 +149,14 @@ verify(const char *path, const char *user_id, const char *questions,
 	key_l = V.size;
 
 	if (ocra.flags & FL_C) {
-		K.data = "C";
-		K.size = sizeof("C");
+		KEY(K, "C");
 		if (0 != db->get(db, &K, &V, 0)) {
 			r = PAM_SERVICE_ERR;
 			goto out;
 		}
 		C = ((uint64_t *)(V.data))[0];
 
-		K.data = "counter_window";
-		K.size = sizeof("counter_window");
+		KEY(K, "counter_window");
 		if (0 != db->get(db, &K, &V, 0)) {
 			r = PAM_SERVICE_ERR;
 			goto out;
@@ -169,8 +164,7 @@ verify(const char *path, const char *user_id, const char *questions,
 		counter_window = ((int *)(V.data))[0];
 	}
 	if (ocra.flags & FL_P) {
-		K.data = "P";
-		K.size = sizeof("P");
+		KEY(K, "P");
 		if (0 != db->get(db, &K, &V, 0)) {
 			r = PAM_SERVICE_ERR;
 			goto out;
@@ -183,8 +177,7 @@ verify(const char *path, const char *user_id, const char *questions,
 		P_l = V.size;
 	}
 	if (ocra.flags & FL_T) {
-		K.data = "timestamp_offset";
-		K.size = sizeof("timestamp_offset");
+		KEY(K, "timestamp_offset");
 		if (0 != db->get(db, &K, &V, 0)) {
 			r = PAM_SERVICE_ERR;
 			goto out;
@@ -201,8 +194,7 @@ verify(const char *path, const char *user_id, const char *questions,
 	if (r == 0) {
 		r = PAM_SUCCESS;
 		if (ocra.flags & FL_C) {
-			K.data = "C";
-			K.size = sizeof("C");
+			KEY(K, "C");
 			V.data = (void *)&next_counter;
 			V.size = sizeof(uint64_t);
 			if (0 != db->put(db, &K, &V, 0)) {
