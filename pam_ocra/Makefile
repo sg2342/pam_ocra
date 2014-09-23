@@ -1,6 +1,7 @@
-SRCDIR=		${.CURDIR}/..
-.PATH:		${SRCDIR}
+SRCDIR=		${.CURDIR}/../common
+.PATH:		${SRCDIR} ${.CURDIR}
 
+CFLAGS+=	-I${.CURDIR}/../common
 SHLIB=		pam_ocra
 SHLIB_NAME=	${SHLIB}.so.${SHLIB_MAJOR}
 SHLIB_MAJOR=	0
