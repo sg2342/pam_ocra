@@ -259,7 +259,10 @@ dec2bin(uint8_t *out, const char *in)
 		return -1;
 	} else {
 		BN_free(B);
-		l = hex2bin(out, tmp);
+                if (l > 1 && tmp[0] == '0')
+		    l = hex2bin(out, tmp + 1);
+                else
+                    l = hex2bin(out, tmp);
 		OPENSSL_free(tmp);
 		return l;
 	}
@@ -538,8 +541,6 @@ rfc6287_verify(const ocra_suite * ocra, const char *suite_string,
 					goto out;
 			} else if (1 != (ret = verify(ocra, key, key_l, buf, buf_l, resp)))
 				goto out;
-
-			printf("%lu\n", TT);
 		}
 	} else if (flags & FL_C)
 		ret = verify_c(ocra, C_off, key, key_l, C, buf, buf_l, resp,
