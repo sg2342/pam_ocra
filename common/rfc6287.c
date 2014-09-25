@@ -278,8 +278,8 @@ dec2bin(uint8_t *out, const char *in)
 err:
 	if (NULL != tmp)
 		OPENSSL_free(tmp);
-	if (NULL != B);
-	BN_free(B);
+	if (NULL != B)
+	    BN_free(B);
 	return ret;
 }
 
