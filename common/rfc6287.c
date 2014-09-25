@@ -100,7 +100,8 @@ parse_cryptofunction(ocra_suite * ocra, const char *in)
 	char *token, *string, *tofree;
 
 	tofree = string = strdup(in);
-	if ((NULL == (token = strsep(&string, "-"))) ||
+	if ((NULL == string) ||
+	    (NULL == (token = strsep(&string, "-"))) ||
 	    (0 != strcmp(token, "HOTP")) ||
 	    (NULL == (token = strsep(&string, "-"))) ||
 	    (none == (ocra->hotp_alg = parse_alg(token))) ||
@@ -124,7 +125,8 @@ parse_datainput(ocra_suite * ocra, const char *in)
 	char *token, *string, *tofree;
 
 	tofree = string = strdup(in);
-	if (NULL == (token = strsep(&string, "-")))
+	if ((NULL == string) ||
+	    (NULL == (token = strsep(&string, "-"))))
 		goto err;
 
 	/* C: optional */
@@ -395,7 +397,8 @@ rfc6287_parse_suite(ocra_suite * ocra, const char *suite)
 	memset(ocra, 0, sizeof(ocra_suite));
 
 	tofree = string = strdup(suite);
-	if ((NULL == (token = strsep(&string, ":"))) ||
+	if ((NULL == string) ||
+	    (NULL == (token = strsep(&string, ":"))) ||
 	    (0 != strcmp(token, "OCRA-1")) ||
 	    (NULL == (token = strsep(&string, ":"))) ||
 	    (0 != (ret = parse_cryptofunction(ocra, token))) ||
