@@ -160,7 +160,7 @@ cmd_info(int argc, char **argv)
 		    (1 == ret) ? "key not in db" : strerror(errno));
 	printf("suite:\t\t%s\n", (char *)(V.data));
 
-	if (0 != rfc6287_parse_suite(&ocra, V.data))
+	if (RFC6287_SUCCESS != rfc6287_parse_suite(&ocra, V.data))
 		errx(EX_SOFTWARE, "rfc6287_parse_suite() failed");
 
 	KEY(K, "key");
@@ -222,17 +222,17 @@ test_input(const ocra_suite * ocra, const char *suite_string,
 	char *questions;
 	char *response;
 
-	if (0 != rfc6287_challenge(ocra, &questions))
+	if (RFC6287_SUCCESS != rfc6287_challenge(ocra, &questions))
 		errx(EX_SOFTWARE, "rfc6287_challenge() failed");
 
-	if (0 != rfc6287_timestamp(ocra, &T))
+	if (RFC6287_SUCCESS != rfc6287_timestamp(ocra, &T))
 		errx(EX_SOFTWARE, "rfc6287_timestamp() failed");
 
-	if (0 != rfc6287_ocra(ocra, suite_string, key, key_l, C, questions,
+	if (RFC6287_SUCCESS != rfc6287_ocra(ocra, suite_string, key, key_l, C, questions,
 	    P, P_l, NULL, 0, T, &response))
 		errx(EX_SOFTWARE, "rfc6287_ocra() failed");
 
-	if (0 != rfc6287_verify(ocra, suite_string, key, key_l, C, questions, P,
+	if (RFC6287_SUCCESS != rfc6287_verify(ocra, suite_string, key, key_l, C, questions, P,
 	    P_l, NULL, 0, T, response, counter_window, &next_counter, timestamp_offset))
 		errx(EX_SOFTWARE, "rfc6287_verify() failed");
 
@@ -356,7 +356,7 @@ cmd_init(int argc, char **argv)
 	    (NULL == key_string))
 		usage();
 
-	if (0 != rfc6287_parse_suite(&ocra, suite_string))
+	if (RFC6287_SUCCESS != rfc6287_parse_suite(&ocra, suite_string))
 		errx(EX_CONFIG, "invalid suite_string");
 	if (ocra.flags & FL_C) {
 		if (NULL == counter_string)

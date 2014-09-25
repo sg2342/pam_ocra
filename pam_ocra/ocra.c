@@ -86,10 +86,10 @@ challenge(const char *path, const char *user_id, char **questions)
 	r = rfc6287_parse_suite(&ocra, V.data);
 
 	db->close(db);
-	if (0 != r)
+	if (RFC6287_SUCCESS != r)
 		return PAM_SERVICE_ERR;
 
-	if (0 != rfc6287_challenge(&ocra, questions))
+	if (RFC6287_SUCCESS != rfc6287_challenge(&ocra, questions))
 		return PAM_SERVICE_ERR;
 	return PAM_SUCCESS;
 }
@@ -132,7 +132,7 @@ verify(const char *path, const char *user_id, const char *questions,
 	}
 	memcpy(suite_string, V.data, V.size);
 
-	if (0 != rfc6287_parse_suite(&ocra, suite_string)) {
+	if (RFC6287_SUCCESS != rfc6287_parse_suite(&ocra, suite_string)) {
 		r = PAM_SERVICE_ERR;
 		goto out;
 	}
@@ -191,7 +191,7 @@ verify(const char *path, const char *user_id, const char *questions,
 	}
 	r = rfc6287_verify(&ocra, suite_string, key, key_l, C, questions, P, P_l,
 	    NULL, 0, T, response, counter_window, &next_counter, timestamp_offset);
-	if (0 == r) {
+	if (RFC6287_SUCCESS == r) {
 		r = PAM_SUCCESS;
 		if (ocra.flags & FL_C) {
 			KEY(K, "C");
@@ -202,7 +202,7 @@ verify(const char *path, const char *user_id, const char *questions,
 				goto out;
 			}
 		}
-	} else if (1 == r)
+	} else if (RFC6287_VERIFY_FAILED == r)
 		r = PAM_AUTH_ERR;
 	else
 		r = PAM_SERVICE_ERR;
