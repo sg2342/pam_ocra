@@ -57,8 +57,7 @@ pin_hash(const ocra_suite * ocra, const char *pin, uint8_t **P, size_t *P_l)
 	    (NULL == (*P = (uint8_t *)malloc(*P_l))) ||
 	    (1 != EVP_DigestFinal(&ctx, *P, &s)) ||
 	    (s != *P_l)) {
-		if (NULL != *P)
-			free(*P);
+		free(*P);
 		EVP_MD_CTX_cleanup(&ctx);
 		return 0;
 	}

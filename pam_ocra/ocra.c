@@ -209,11 +209,8 @@ verify(const char *path, const char *user_id, const char *questions,
 
 out:
 	db->close(db);
-	if (NULL != suite_string)
-		free(suite_string);
-	if (NULL != key)
-		free(key);
-	if (NULL != P)
-		free(P);
+	free(suite_string);
+	free(key);
+	free(P);
 	return r;
 }

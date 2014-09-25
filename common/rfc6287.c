@@ -238,8 +238,7 @@ hex2bin(uint8_t *out, const char *in)
 	    (l != BN_bn2bin(B, out)))
 		l = -1;
 	BN_free(B);
-	if (tofree)
-		free(tofree);
+	free(tofree);
 	return l;
 }
 
@@ -259,10 +258,10 @@ dec2bin(uint8_t *out, const char *in)
 		return -1;
 	} else {
 		BN_free(B);
-                if (l > 1 && tmp[0] == '0')
-		    l = hex2bin(out, tmp + 1);
-                else
-                    l = hex2bin(out, tmp);
+		if (l > 1 && tmp[0] == '0')
+			l = hex2bin(out, tmp + 1);
+		else
+			l = hex2bin(out, tmp);
 		OPENSSL_free(tmp);
 		return l;
 	}
@@ -351,8 +350,7 @@ verify(const ocra_suite * ocra, const uint8_t *key, size_t key_l,
 	    (1 != HMAC_Final(&ctx, md, &md_l)) ||
 	    (md_l != mdlen(ocra->hotp_alg))) {
 		HMAC_CTX_cleanup(&ctx);
-		if (NULL != md)
-			free(md);
+		free(md);
 		return -1;
 	}
 	HMAC_CTX_cleanup(&ctx);
@@ -461,8 +459,7 @@ rfc6287_ocra(const ocra_suite * ocra, const char *suite_string,
 	    (1 != HMAC_Final(&ctx, md, &md_l)) ||
 	    (md_l != mdlen(ocra->hotp_alg))) {
 		HMAC_CTX_cleanup(&ctx);
-		if (NULL != md)
-			free(md);
+		free(md);
 		return -1;
 	}
 	HMAC_CTX_cleanup(&ctx);
