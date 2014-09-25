@@ -103,7 +103,7 @@ C1_1(void)
 	if (0 != (ret = rfc6287_parse_suite(&ocra, suite)))
 		errx(EX_SOFTWARE, "in C1_1: rfc6287_parse_suite() failed: %d", ret);
 
-	for (i = 0; i < 10; i++) {
+	for (i = 0; 10 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
@@ -141,7 +141,7 @@ C1_2(void)
 	if (0 != (ret = rfc6287_parse_suite(&ocra, suite)))
 		errx(EX_SOFTWARE, "in C1_2: rfc6287_parse_suite() failed: %d", ret);
 
-	for (C = 0; C < 10; C++) {
+	for (C = 0; 10 > C; C++) {
 		const char *R = tv[C];
 		char *RR;
 
@@ -170,7 +170,7 @@ C1_3(void)
 	if (0 != (ret = rfc6287_parse_suite(&ocra, suite)))
 		errx(EX_SOFTWARE, "in C1_3: rfc6287_parse_suite() failed: %d", ret);
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
@@ -206,7 +206,7 @@ C1_4(void)
 	if (0 != (ret = rfc6287_parse_suite(&ocra, suite)))
 		errx(EX_SOFTWARE, "in C1_4: rfc6287_parse_suite() failed: %d", ret);
 
-	for (C = 0; C < 10; C++) {
+	for (C = 0; 10 > C; C++) {
 		const char *Q = tv[C][0];
 		const char *R = tv[C][1];
 		char *RR;
@@ -237,7 +237,7 @@ C1_5(void)
 	if (0 != (ret = rfc6287_parse_suite(&ocra, suite)))
 		errx(EX_SOFTWARE, "in C1_5: rfc6287_parse_suite() failed: %d", ret);
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
@@ -272,7 +272,7 @@ C2_1(void)
 	if (0 != (ret = rfc6287_parse_suite(&ocra, suite)))
 		errx(EX_SOFTWARE, "in C2_1: rfc6287_parse_suite() failed: %d", ret);
 
-	for (i = 0; i < 10; i++) {
+	for (i = 0; 10 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
@@ -302,7 +302,7 @@ C2_2(void)
 	if (0 != (ret = rfc6287_parse_suite(&ocra, suite)))
 		errx(EX_SOFTWARE, "in C2_2: rfc6287_parse_suite() failed: %d", ret);
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
@@ -332,7 +332,7 @@ C2_3(void)
 	if (0 != (ret = rfc6287_parse_suite(&ocra, suite)))
 		errx(EX_SOFTWARE, "in C2_3: rfc6287_parse_suite() failed: %d", ret);
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
@@ -362,7 +362,7 @@ C3_1(void)
 	if (0 != (ret = rfc6287_parse_suite(&ocra, suite)))
 		errx(EX_SOFTWARE, "in C3_1 rfc6287_parse_suite() failed: %d", ret);
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
@@ -393,7 +393,7 @@ C3_2(void)
 	if (0 != (ret = rfc6287_parse_suite(&ocra, suite)))
 		errx(EX_SOFTWARE, "in C3_2 rfc6287_parse_suite() failed: %d", ret);
 
-	for (i = 0; i < 5; i++) {
+	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;

@@ -76,7 +76,7 @@ key_from_hex(const ocra_suite * ocra, const char *key_string, uint8_t **key, siz
 		return -1;
 	if (NULL == (*key = (uint8_t *)malloc(*key_l)))
 		return -1;
-	for (i = 0; i < *key_l; i++)
+	for (i = 0; *key_l > i; i++)
 		if (1 != sscanf(&key_string[i * 2], "%2hhx", *key + i)) {
 			free(*key);
 			return -1;
@@ -157,7 +157,7 @@ cmd_info(int argc, char **argv)
 	KEY(K, "suite");
 	if (0 != (ret = db->get(db, &K, &V, 0)))
 		errx(EX_OSERR, "db->get() failed: %s",
-		    (ret == 1) ? "key not in db" : strerror(errno));
+		    (1 == ret) ? "key not in db" : strerror(errno));
 	printf("suite:\t\t%s\n", (char *)(V.data));
 
 	if (0 != rfc6287_parse_suite(&ocra, V.data))
@@ -166,12 +166,12 @@ cmd_info(int argc, char **argv)
 	KEY(K, "key");
 	if (0 != (ret = db->get(db, &K, &V, 0)))
 		errx(EX_OSERR, "db->get() failed: %s",
-		    (ret == 1) ? "key not in db" : strerror(errno));
+		    (1 == ret) ? "key not in db" : strerror(errno));
 	if (mdlen(ocra.hotp_alg) != V.size)
 		errx(EX_SOFTWARE, "key size does not match suite!");
 
 	printf("key:\t\t");
-	for (i = 0; i < V.size; i++)
+	for (i = 0; V.size > i; i++)
 		printf("%0.02x", ((uint8_t *)(V.data))[i]);
 	printf("\n");
 
@@ -179,25 +179,25 @@ cmd_info(int argc, char **argv)
 		KEY(K, "C");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
-			    (ret == 1) ? "key not in db" : strerror(errno));
+			    (1 == ret) ? "key not in db" : strerror(errno));
 		printf("counter:\t%d\n", ((int *)(V.data))[0]);
 
 		KEY(K, "counter_window");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
-			    (ret == 1) ? "key not in db" : strerror(errno));
+			    (1 == ret) ? "key not in db" : strerror(errno));
 		printf("counter_window: %d\n", ((int *)(V.data))[0]);
 	}
 	if (ocra.flags & FL_P) {
 		KEY(K, "P");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
-			    (ret == 1) ? "key not in db" : strerror(errno));
+			    (1 == ret) ? "key not in db" : strerror(errno));
 
 		if (mdlen(ocra.P_alg) != V.size)
 			errx(EX_SOFTWARE, "pin hash size does not match suite!");
 		printf("pin_hash:\t");
-		for (i = 0; i < V.size; i++)
+		for (i = 0; V.size > i; i++)
 			printf("%0.02x", ((uint8_t *)(V.data))[i]);
 		printf("\n");
 	}
@@ -205,7 +205,7 @@ cmd_info(int argc, char **argv)
 		KEY(K, "timestamp_offset");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
-			    (ret == 1) ? "key not in db" : strerror(errno));
+			    (1 == ret) ? "key not in db" : strerror(errno));
 		printf("timestamp_offset: %d\n", ((int *)(V.data))[0]);
 	}
 	if (0 != (db->close(db)))
@@ -409,7 +409,7 @@ cmd_init(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-	if (argc < 2)
+	if (2 > argc)
 		usage();
 	if (0 == strcmp(argv[1], "init"))
 		cmd_init(argc - 1, argv + 1);

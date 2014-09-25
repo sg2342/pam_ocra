@@ -110,7 +110,7 @@ parse_cryptofunction(ocra_suite * ocra, const char *in)
 	    (-1 == (ocra->hotp_trunc = parse_num(token))) ||
 	    ((0 != ocra->hotp_trunc) &&
 	    ((4 > ocra->hotp_trunc) || (11 < ocra->hotp_trunc))) ||
-	    ((ocra->hotp_trunc < 10) && (2 == l)))
+	    ((10 > ocra->hotp_trunc) && (2 == l)))
 		ret = -1;
 	else
 		ret = 0;
@@ -152,7 +152,7 @@ parse_datainput(ocra_suite * ocra, const char *in)
 	if (NULL == (token = strsep(&string, "-")))
 		goto done;
 	/* PH: optional */
-	if (token[0] == 'P') {
+	if ('P' == token[0]) {
 		ocra->flags |= FL_P;
 		if (none == (ocra->P_alg = parse_alg(token + 1)))
 			goto err;
@@ -160,7 +160,7 @@ parse_datainput(ocra_suite * ocra, const char *in)
 			goto done;
 	}
 	/* Snnn: optional */
-	if (token[0] == 'S') {
+	if ('S' == token[0]) {
 		int tmp;
 
 		ocra->flags |= FL_S;
@@ -173,7 +173,7 @@ parse_datainput(ocra_suite * ocra, const char *in)
 			goto done;
 	}
 	/* TG: optional */
-	if (token[0] == 'T') {
+	if ('T' == token[0]) {
 		int y;
 		int l = strlen(token);
 		char c;
@@ -187,17 +187,17 @@ parse_datainput(ocra_suite * ocra, const char *in)
 			goto err;
 		switch (c) {
 		case 'S':
-			if (((0 > y) || (60 < y)) || ((y < 10) && (l != 3)))
+			if (((0 > y) || (60 < y)) || ((10 > y) && (3 != l)))
 				goto err;
 			ocra->T_step = y;
 			break;
 		case 'M':
-			if (((0 > y) || (60 < y)) || ((y < 10) && (l != 3)))
+			if (((0 > y) || (60 < y)) || ((10 > y) && (3 != l)))
 				goto err;
 			ocra->T_step = y * 60;
 			break;
 		case 'H':
-			if (((0 > y) || (48 < y)) || ((y < 10) && (l != 3)))
+			if (((0 > y) || (48 < y)) || ((10 < y) && (3 != l)))
 				goto err;
 			ocra->T_step = y * 3600;
 			break;
@@ -260,7 +260,7 @@ dec2bin(uint8_t *out, const char *in)
 		return -1;
 	} else {
 		BN_free(B);
-		if (l > 1 && tmp[0] == '0')
+		if (1 < l && '0' == tmp[0])
 			l = hex2bin(out, tmp + 1);
 		else
 			l = hex2bin(out, tmp);
@@ -533,7 +533,7 @@ rfc6287_verify(const ocra_suite * ocra, const char *suite_string,
 	if (flags & FL_T) {
 		uint64_t TT;
 
-		for (TT = T - timestamp_offset; TT != T + timestamp_offset; TT++) {
+		for (TT = T - timestamp_offset; T + timestamp_offset != TT; TT++) {
 			st64be(buf + T_off, TT);
 			if (flags & FL_C) {
 				if (1 != (ret = verify_c(ocra, C_off, key, key_l, C, buf, buf_l,
@@ -565,7 +565,7 @@ rfc6287_challenge(const ocra_suite * ocra, char **questions)
 		return -2;
 
 	(*questions)[ocra->Q_l] = 0;
-	for (i = 0; i < ocra->Q_l; i++)
+	for (i = 0; ocra->Q_l > i; i++)
 		switch (ocra->Q_fmt) {
 		case a:
 			(*questions)[i] = 33 + (buf[i] % 93);

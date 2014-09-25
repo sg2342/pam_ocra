@@ -191,7 +191,7 @@ verify(const char *path, const char *user_id, const char *questions,
 	}
 	r = rfc6287_verify(&ocra, suite_string, key, key_l, C, questions, P, P_l,
 	    NULL, 0, T, response, counter_window, &next_counter, timestamp_offset);
-	if (r == 0) {
+	if (0 == r) {
 		r = PAM_SUCCESS;
 		if (ocra.flags & FL_C) {
 			KEY(K, "C");
@@ -202,7 +202,7 @@ verify(const char *path, const char *user_id, const char *questions,
 				goto out;
 			}
 		}
-	} else if (r == 1)
+	} else if (1 == r)
 		r = PAM_AUTH_ERR;
 	else
 		r = PAM_SERVICE_ERR;
