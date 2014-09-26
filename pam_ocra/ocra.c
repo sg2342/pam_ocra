@@ -52,7 +52,7 @@ db_get(DB * db, DBT * K, DBT * V)
 
 	if (0 != (r = db->get(db, K, V, 0)))
 		syslog(LOG_ERR, "db->get() failed for %s :%s",
-		    K->data, errno ? (strerror(errno)) : "");
+		    K->data, (1 == r) ? "key not in db" : (strerror(errno)));
 	return r;
 };
 
@@ -71,11 +71,11 @@ open_db(DB ** db, int flags, const char *path, const char *user_id)
 		if (NULL != path) {
 			asprintf(&p2, "%s/%s", path, user_id);
 			if (NULL == (*db = dbopen(p2, flags, 0, DB_BTREE, NULL)))
-				syslog(LOG_ERR, "dbopen(\"%s\", ...) failed :%s", p2,
+				syslog(LOG_ERR, "dbopen(\"%s\", ...) failed: %s", p2,
 				    strerror(errno));
 			r = PAM_NO_MODULE_DATA;
 		} else {
-			syslog(LOG_ERR, "dbopen(\"%s\", ...) failed :%s", p1,
+			syslog(LOG_ERR, "dbopen(\"%s\", ...) failed: %s", p1,
 			    strerror(errno));
 			r = PAM_NO_MODULE_DATA;
 		}
@@ -108,11 +108,11 @@ challenge(const char *path, const char *user_id, char **questions)
 	db->close(db);
 
 	if (RFC6287_SUCCESS != r) {
-		syslog(LOG_ERR, "rfc6287_parse_suite() failed :%s", rfc6287_err(r));
+		syslog(LOG_ERR, "rfc6287_parse_suite() failed: %s", rfc6287_err(r));
 		return PAM_SERVICE_ERR;
 	}
 	if (RFC6287_SUCCESS != (r = rfc6287_challenge(&ocra, questions))) {
-		syslog(LOG_ERR, "rfc6287_challenge() failed :%s", rfc6287_err(r));
+		syslog(LOG_ERR, "rfc6287_challenge() failed: %s", rfc6287_err(r));
 		return PAM_SERVICE_ERR;
 	}
 	return PAM_SUCCESS;
@@ -156,7 +156,7 @@ verify(const char *path, const char *user_id, const char *questions,
 	memcpy(suite_string, V.data, V.size);
 
 	if (RFC6287_SUCCESS != (r = rfc6287_parse_suite(&ocra, suite_string))) {
-		syslog(LOG_ERR, "rfc6287_parse_suite() failed :%s", rfc6287_err(r));
+		syslog(LOG_ERR, "rfc6287_parse_suite() failed: %s", rfc6287_err(r));
 		goto out;
 	}
 	KEY(K, "key");
@@ -198,7 +198,7 @@ verify(const char *path, const char *user_id, const char *questions,
 		timestamp_offset = ((int *)(V.data))[0];
 
 		if (0 != rfc6287_timestamp(&ocra, &T)) {
-			syslog(LOG_ERR, "rfc6287_timestamp() failed :%s", rfc6287_err(r));
+			syslog(LOG_ERR, "rfc6287_timestamp() failed: %s", rfc6287_err(r));
 			goto out;
 		}
 	}
@@ -210,8 +210,8 @@ verify(const char *path, const char *user_id, const char *questions,
 			V.data = (void *)&next_counter;
 			V.size = sizeof(uint64_t);
 			if (0 != db->put(db, &K, &V, 0)) {
-				syslog(LOG_ERR, "db->put() failed for %s :%s",
-				    K.data, errno ? (strerror(errno)) : "");
+				syslog(LOG_ERR, "db->put() failed for %s: %s",
+				    K.data, strerror(errno));
 				goto out;
 			}
 		}
@@ -219,7 +219,7 @@ verify(const char *path, const char *user_id, const char *questions,
 	} else if (RFC6287_VERIFY_FAILED == r)
 		ret = PAM_AUTH_ERR;
 	else
-		syslog(LOG_ERR, "rfc6287_challenge() failed :%s", rfc6287_err(r));
+		syslog(LOG_ERR, "rfc6287_challenge() failed: %s", rfc6287_err(r));
 out:
 	if (0 != db->close(db))
 		syslog(LOG_ERR, "db->close() failed: %s", strerror(errno));
