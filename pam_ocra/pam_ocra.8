@@ -61,7 +61,6 @@ parameter is set,
 .Ar directory/USERNAME
 will be used. It then
 provides the user with an OCRA challenge and verifies the response.
-
 .Pp
 The following options may be passed to the authentication module:
 .Bl -tag -width ".Cm disallow"
@@ -76,18 +75,19 @@ which can leak information to a hypothetical attacker about who uses OCRA
 and who does not.
 .El
 .Sh FILES
-.Bl -tag -with Ds -compact
+.Bl -tag -width Ds -compact
 .It Pa ~/.ocra
 .El
 OCRA credential file
 .Sh SEE ALSO
 .Xr pam.conf 5 ,
-.Xr pam 8,
+.Xr pam 8 ,
 .Xr ocra_tool 1
 .Sh STANDARDS
 .Bl -tag -offset indent -width 8n
 .It Li RFC6287 
 .Em OCRA: OATH Challenge-Response Algorithm
+.El
 .Sh AUTHORS
 The
 .Nm
