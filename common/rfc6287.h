@@ -11,7 +11,7 @@ enum {
 	FL_C = 1, FL_P = 2, FL_S = 4, FL_T = 8
 };
 
-enum {
+enum RFC6287_{
     RFC6287_INVALID_SUITE       = -5,
     RFC6287_INVALID_CHALLENGE   = -4,
     RFC6287_INVALID_PARAMS      = -3,
@@ -39,6 +39,8 @@ typedef struct ocra_suite_struct {
 
 int parse_num(
 	const char *);
+
+const char * rfc6287_err(int e);
 
 int rfc6287_timestamp(
 		const ocra_suite * ocra,

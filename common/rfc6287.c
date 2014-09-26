@@ -32,11 +32,13 @@
 #include <string.h>
 #include <stdio.h>
 #include <time.h>
+#include <errno.h>
 
 #include <openssl/rand.h>
 #include <openssl/hmac.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
 
 #include "rfc6287.h"
 
@@ -279,7 +281,7 @@ err:
 	if (NULL != tmp)
 		OPENSSL_free(tmp);
 	if (NULL != B)
-	    BN_free(B);
+		BN_free(B);
 	return ret;
 }
 
@@ -598,4 +600,26 @@ rfc6287_challenge(const ocra_suite * ocra, char **questions)
 			break;
 		}
 	return RFC6287_SUCCESS;
+}
+
+const char *
+rfc6287_err(int e)
+{
+	switch (e) {
+	case RFC6287_INVALID_SUITE:
+		return "invalid suite";
+	case RFC6287_INVALID_CHALLENGE:
+		return "invalid challenge";
+	case RFC6287_INVALID_PARAMS:
+		return "invalid parameters";
+	case RFC6287_ERR_POSIX:
+		return strerror(errno);
+	case RFC6287_ERR_OPENSSL:
+		return ERR_error_string(ERR_get_error(), NULL);
+	case RFC6287_VERIFY_FAILED:
+		return "verify failed";
+	case RFC6287_SUCCESS:
+	default:
+		return "no error";
+	}
 }

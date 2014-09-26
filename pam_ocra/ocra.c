@@ -31,14 +31,30 @@
 #include <stdarg.h>
 #include <db.h>
 #include <fcntl.h>
+#include <syslog.h>
+#include <errno.h>
 
 #include <security/pam_constants.h>
 
 #include <openssl/evp.h>
+
 #include "rfc6287.h"
 #include "ocra.h"
 
 #define KEY(k, s) k.data = (void*)s; k.size = sizeof(s);
+
+
+
+static int
+db_get(DB * db, DBT * K, DBT * V)
+{
+	int r;
+
+	if (0 != (r = db->get(db, K, V, 0)))
+		syslog(LOG_ERR, "db->get() failed for %s :%s",
+		    K->data, errno ? (strerror(errno)) : "");
+	return r;
+};
 
 static int
 open_db(DB ** db, int flags, const char *path, const char *user_id)
@@ -55,8 +71,12 @@ open_db(DB ** db, int flags, const char *path, const char *user_id)
 		if (NULL != path) {
 			asprintf(&p2, "%s/%s", path, user_id);
 			if (NULL == (*db = dbopen(p2, flags, 0, DB_BTREE, NULL)))
-				r = PAM_NO_MODULE_DATA;
+				syslog(LOG_ERR, "dbopen(\"%s\", ...) failed :%s", p2,
+				    strerror(errno));
+			r = PAM_NO_MODULE_DATA;
 		} else {
+			syslog(LOG_ERR, "dbopen(\"%s\", ...) failed :%s", p1,
+			    strerror(errno));
 			r = PAM_NO_MODULE_DATA;
 		}
 	}
@@ -79,18 +99,22 @@ challenge(const char *path, const char *user_id, char **questions)
 		return r;
 
 	KEY(K, "suite");
-	if (0 != (r = db->get(db, &K, &V, 0))) {
+	if (0 != db_get(db, &K, &V)) {
 		db->close(db);
 		return PAM_SERVICE_ERR;
 	}
 	r = rfc6287_parse_suite(&ocra, V.data);
 
 	db->close(db);
-	if (RFC6287_SUCCESS != r)
-		return PAM_SERVICE_ERR;
 
-	if (RFC6287_SUCCESS != rfc6287_challenge(&ocra, questions))
+	if (RFC6287_SUCCESS != r) {
+		syslog(LOG_ERR, "rfc6287_parse_suite() failed :%s", rfc6287_err(r));
 		return PAM_SERVICE_ERR;
+	}
+	if (RFC6287_SUCCESS != (r = rfc6287_challenge(&ocra, questions))) {
+		syslog(LOG_ERR, "rfc6287_challenge() failed :%s", rfc6287_err(r));
+		return PAM_SERVICE_ERR;
+	}
 	return PAM_SUCCESS;
 }
 
@@ -98,6 +122,7 @@ int
 verify(const char *path, const char *user_id, const char *questions,
     const char *response)
 {
+	int ret = PAM_SERVICE_ERR;
 	int r;
 	DB *db = NULL;
 	DBT K, V;
@@ -122,27 +147,23 @@ verify(const char *path, const char *user_id, const char *questions,
 		return r;
 
 	KEY(K, "suite");
-	if (0 != db->get(db, &K, &V, 0)) {
-		r = PAM_SERVICE_ERR;
+	if (0 != db_get(db, &K, &V))
 		goto out;
-	}
 	if (NULL == (suite_string = (char *)malloc(V.size))) {
-		r = PAM_SERVICE_ERR;
+		syslog(LOG_ERR, "malloc() failed: %s", strerror(errno));
 		goto out;
 	}
 	memcpy(suite_string, V.data, V.size);
 
-	if (RFC6287_SUCCESS != rfc6287_parse_suite(&ocra, suite_string)) {
-		r = PAM_SERVICE_ERR;
+	if (RFC6287_SUCCESS != (r = rfc6287_parse_suite(&ocra, suite_string))) {
+		syslog(LOG_ERR, "rfc6287_parse_suite() failed :%s", rfc6287_err(r));
 		goto out;
 	}
 	KEY(K, "key");
-	if (0 != db->get(db, &K, &V, 0)) {
-		r = PAM_SERVICE_ERR;
+	if (0 != db_get(db, &K, &V))
 		goto out;
-	}
 	if (NULL == (key = (uint8_t *)malloc(V.size))) {
-		r = PAM_SERVICE_ERR;
+		syslog(LOG_ERR, "malloc() failed: %s", strerror(errno));
 		goto out;
 	}
 	memcpy(key, V.data, V.size);
@@ -150,27 +171,21 @@ verify(const char *path, const char *user_id, const char *questions,
 
 	if (ocra.flags & FL_C) {
 		KEY(K, "C");
-		if (0 != db->get(db, &K, &V, 0)) {
-			r = PAM_SERVICE_ERR;
+		if (0 != db_get(db, &K, &V))
 			goto out;
-		}
 		C = ((uint64_t *)(V.data))[0];
 
 		KEY(K, "counter_window");
-		if (0 != db->get(db, &K, &V, 0)) {
-			r = PAM_SERVICE_ERR;
+		if (0 != db_get(db, &K, &V))
 			goto out;
-		}
 		counter_window = ((int *)(V.data))[0];
 	}
 	if (ocra.flags & FL_P) {
 		KEY(K, "P");
-		if (0 != db->get(db, &K, &V, 0)) {
-			r = PAM_SERVICE_ERR;
+		if (0 != db_get(db, &K, &V))
 			goto out;
-		}
 		if (NULL == (P = (uint8_t *)malloc(V.size))) {
-			r = PAM_SERVICE_ERR;
+			syslog(LOG_ERR, "malloc() failed: %s", strerror(errno));
 			goto out;
 		}
 		memcpy(P, V.data, V.size);
@@ -178,39 +193,38 @@ verify(const char *path, const char *user_id, const char *questions,
 	}
 	if (ocra.flags & FL_T) {
 		KEY(K, "timestamp_offset");
-		if (0 != db->get(db, &K, &V, 0)) {
-			r = PAM_SERVICE_ERR;
+		if (0 != db_get(db, &K, &V))
 			goto out;
-		}
 		timestamp_offset = ((int *)(V.data))[0];
 
 		if (0 != rfc6287_timestamp(&ocra, &T)) {
-			r = PAM_SERVICE_ERR;
+			syslog(LOG_ERR, "rfc6287_timestamp() failed :%s", rfc6287_err(r));
 			goto out;
 		}
 	}
 	r = rfc6287_verify(&ocra, suite_string, key, key_l, C, questions, P, P_l,
 	    NULL, 0, T, response, counter_window, &next_counter, timestamp_offset);
 	if (RFC6287_SUCCESS == r) {
-		r = PAM_SUCCESS;
 		if (ocra.flags & FL_C) {
 			KEY(K, "C");
 			V.data = (void *)&next_counter;
 			V.size = sizeof(uint64_t);
 			if (0 != db->put(db, &K, &V, 0)) {
-				r = PAM_SERVICE_ERR;
+				syslog(LOG_ERR, "db->put() failed for %s :%s",
+				    K.data, errno ? (strerror(errno)) : "");
 				goto out;
 			}
 		}
+		ret = PAM_SUCCESS;
 	} else if (RFC6287_VERIFY_FAILED == r)
-		r = PAM_AUTH_ERR;
+		ret = PAM_AUTH_ERR;
 	else
-		r = PAM_SERVICE_ERR;
-
+		syslog(LOG_ERR, "rfc6287_challenge() failed :%s", rfc6287_err(r));
 out:
-	db->close(db);
+	if (0 != db->close(db))
+		syslog(LOG_ERR, "db->close() failed: %s", strerror(errno));
 	free(suite_string);
 	free(key);
 	free(P);
-	return r;
+	return ret;
 }
