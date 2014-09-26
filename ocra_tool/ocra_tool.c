@@ -38,12 +38,13 @@
 #include <fcntl.h>
 
 #include <openssl/evp.h>
+#include <openssl/err.h>
 
 #include "rfc6287.h"
 
 #define KEY(k, s) k.data = (void*)s; k.size = sizeof(s);
 
-static int
+static void
 pin_hash(const ocra_suite * ocra, const char *pin, uint8_t **P, size_t *P_l)
 {
 	unsigned int s;
@@ -52,17 +53,16 @@ pin_hash(const ocra_suite * ocra, const char *pin, uint8_t **P, size_t *P_l)
 	*P = NULL;
 	*P_l = mdlen(ocra->P_alg);
 	EVP_MD_CTX_init(&ctx);
+
+	if (NULL == (*P = (uint8_t *)malloc(*P_l)))
+		err(EX_OSERR, "malloc() failed");
+
 	if ((1 != EVP_DigestInit(&ctx, evp_md(ocra->P_alg))) ||
 	    (1 != EVP_DigestUpdate(&ctx, pin, strlen(pin))) ||
-	    (NULL == (*P = (uint8_t *)malloc(*P_l))) ||
 	    (1 != EVP_DigestFinal(&ctx, *P, &s)) ||
-	    (s != *P_l)) {
-		free(*P);
-		EVP_MD_CTX_cleanup(&ctx);
-		return 0;
-	}
+	    (s != *P_l))
+		errx(EX_OSERR, "pin_hash() failed: %s", ERR_error_string(ERR_get_error(), NULL));
 	EVP_MD_CTX_cleanup(&ctx);
-	return 0;
 }
 
 static int
@@ -151,7 +151,7 @@ cmd_info(int argc, char **argv)
 	memset(&V, 0, sizeof(V));
 
 	if (NULL == (db = dbopen(fname, O_EXLOCK | O_RDONLY, 0600, DB_BTREE, NULL)))
-		errx(EX_OSERR, "dbopen() failed: %s", strerror(errno));
+		err(EX_OSERR, "dbopen() failed");
 
 
 	KEY(K, "suite");
@@ -160,8 +160,8 @@ cmd_info(int argc, char **argv)
 		    (1 == ret) ? "key not in db" : strerror(errno));
 	printf("suite:\t\t%s\n", (char *)(V.data));
 
-	if (RFC6287_SUCCESS != rfc6287_parse_suite(&ocra, V.data))
-		errx(EX_SOFTWARE, "rfc6287_parse_suite() failed");
+	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, V.data)))
+		errx(EX_SOFTWARE, "rfc6287_parse_suite() failed: %s", rfc6287_err(ret));
 
 	KEY(K, "key");
 	if (0 != (ret = db->get(db, &K, &V, 0)))
@@ -217,24 +217,25 @@ test_input(const ocra_suite * ocra, const char *suite_string,
     const uint8_t *key, size_t key_l, uint64_t C, const uint8_t *P,
     size_t P_l, int counter_window, int timestamp_offset)
 {
+	int r;
 	uint64_t T;
 	uint64_t next_counter;
 	char *questions;
 	char *response;
 
-	if (RFC6287_SUCCESS != rfc6287_challenge(ocra, &questions))
-		errx(EX_SOFTWARE, "rfc6287_challenge() failed");
+	if (RFC6287_SUCCESS != (r = rfc6287_challenge(ocra, &questions)))
+		errx(EX_SOFTWARE, "rfc6287_challenge() failed: %s", rfc6287_err(r));
 
-	if (RFC6287_SUCCESS != rfc6287_timestamp(ocra, &T))
-		errx(EX_SOFTWARE, "rfc6287_timestamp() failed");
+	if (RFC6287_SUCCESS != (r = rfc6287_timestamp(ocra, &T)))
+		errx(EX_SOFTWARE, "rfc6287_timestamp() failedi: %s", rfc6287_err(r));
 
-	if (RFC6287_SUCCESS != rfc6287_ocra(ocra, suite_string, key, key_l, C, questions,
-	    P, P_l, NULL, 0, T, &response))
-		errx(EX_SOFTWARE, "rfc6287_ocra() failed");
+	if (RFC6287_SUCCESS != (r = rfc6287_ocra(ocra, suite_string, key, key_l, C, questions,
+	    P, P_l, NULL, 0, T, &response)))
+		errx(EX_SOFTWARE, "rfc6287_ocra() failed: %s", rfc6287_err(r));
 
-	if (RFC6287_SUCCESS != rfc6287_verify(ocra, suite_string, key, key_l, C, questions, P,
-	    P_l, NULL, 0, T, response, counter_window, &next_counter, timestamp_offset))
-		errx(EX_SOFTWARE, "rfc6287_verify() failed");
+	if (RFC6287_SUCCESS != (r = rfc6287_verify(ocra, suite_string, key, key_l, C, questions, P,
+	    P_l, NULL, 0, T, response, counter_window, &next_counter, timestamp_offset)))
+		errx(EX_SOFTWARE, "rfc6287_verify() failedi: %s", rfc6287_err(r));
 
 	free(response);
 	free(questions);
@@ -253,56 +254,55 @@ write_db(const char *fname, const char *suite_string,
 
 	if (NULL == (db = dbopen(fname, O_CREAT | O_EXLOCK | O_RDWR | O_TRUNC,
 	    0600, DB_BTREE, NULL)))
-		errx(EX_OSERR, "dbopen() failed: %s", strerror(errno));
+		err(EX_OSERR, "dbopen() failed");
 
 	KEY(K, "suite");
 	V.data = (void *)suite_string;
 	V.size = strlen(suite_string) + 1;
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
-		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
+		err(EX_OSERR, "db->put() failed");
 
 	KEY(K, "key");
 	V.data = (void *)key;
 	V.size = key_l;
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
-		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
+		err(EX_OSERR, "db->put() failed");
 
 	KEY(K, "C");
 	V.data = &C;
 	V.size = sizeof(C);
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
-		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
+		err(EX_OSERR, "db->put() failed");
 
 	KEY(K, "V");
 	V.data = (void *)P;
 	V.size = P_l;
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
-		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
+		err(EX_OSERR, "db->put() failed");
 
 	KEY(K, "counter_window");
 	V.data = &counter_window;
 	V.size = sizeof(counter_window);
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
-		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
+		err(EX_OSERR, "db->put() failed");
 
 	KEY(K, "timestamp_offset");
 	V.data = &timestamp_offset;
 	V.size = sizeof(timestamp_offset);
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
-		errx(EX_OSERR, "db->put() failed: %s", strerror(errno));
+		err(EX_OSERR, "db->put() failed");
 
 	if (0 != (db->sync(db, 0)))
-		errx(EX_OSERR, "db->sync() failed: %s", strerror(errno));
+		err(EX_OSERR, "db->sync() failed");
 
 	if (0 != (db->close(db)))
-		errx(EX_OSERR, "db->close() failed: %s", strerror(errno));
-
-
+		err(EX_OSERR, "db->close() failed");
 }
 
 static void
 cmd_init(int argc, char **argv)
 {
+	int r;
 	int ch;
 	char *fname = NULL;
 	char *suite_string = NULL;
@@ -356,8 +356,8 @@ cmd_init(int argc, char **argv)
 	    (NULL == key_string))
 		usage();
 
-	if (RFC6287_SUCCESS != rfc6287_parse_suite(&ocra, suite_string))
-		errx(EX_CONFIG, "invalid suite_string");
+	if (RFC6287_SUCCESS != (r = rfc6287_parse_suite(&ocra, suite_string)))
+		err(EX_CONFIG, "rfc6287_parse_suite() failed: %s", rfc6287_err(r));
 	if (ocra.flags & FL_C) {
 		if (NULL == counter_string)
 			errx(EX_CONFIG, "suite requires counter parameter "
@@ -390,8 +390,7 @@ cmd_init(int argc, char **argv)
 	if (ocra.flags & FL_P) {
 		if (NULL == pin_string)
 			errx(EX_CONFIG, "suite requires pin parameter (-p <pin> missing)");
-		if (0 != pin_hash(&ocra, pin_string, &P, &P_l))
-			errx(EX_SOFTWARE, "internal error, pin_hash() failed");
+		pin_hash(&ocra, pin_string, &P, &P_l);
 	} else if (NULL != pin_string)
 		errx(EX_CONFIG, "suite does not require pin parameter"
 		    " (-p <pin> must not be set)");
