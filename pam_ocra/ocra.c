@@ -83,6 +83,25 @@ open_db(DB ** db, int flags, const char *path, const char *user_id)
 	return r;
 }
 
+
+int
+fake_challenge(const char *suite_string, char **questions)
+{
+	int r;
+	ocra_suite ocra;
+
+	if (RFC6287_SUCCESS != (r = rfc6287_parse_suite(&ocra, suite_string))) {
+		syslog(LOG_ERR, "rfc6287_parse_suite() failed for fake_prompt \"%s\": %s",
+		    suite_string, rfc6287_err(r));
+		return PAM_SERVICE_ERR;
+	}
+	if (RFC6287_SUCCESS != (r = rfc6287_challenge(&ocra, questions))) {
+		syslog(LOG_ERR, "rfc6287_challenge() failed: %s", rfc6287_err(r));
+		return PAM_SERVICE_ERR;
+	}
+	return PAM_SUCCESS;
+}
+
 int
 challenge(const char *path, const char *user_id, char **questions)
 {

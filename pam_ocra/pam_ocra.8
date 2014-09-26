@@ -1,0 +1,94 @@
+.\" Copyright (c) 2014 Stefan Grundmann
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd September 26, 2014
+.Dt PAM_OCRA 8
+.Os
+.Sh NAME
+.Nm pam_ocra
+.Nd RFC6287 OCRA: OATH Challenge-Response Algorithm PAM module
+.Sh SYNOPSIS
+.Op Ar service-name
+.Ar module-type
+.Ar control-flag
+.Pa pam_ocra
+.Op Ar options
+.Sh DESCRIPTION
+The
+OCRA service module for PAM,
+.Nm
+provides functionality for only one PAM category:
+authentication.
+In terms of the
+.Ar module-type
+parameter, this is the
+.Dq Li auth
+feature.
+It also provides null functions for the remaining module types.
+.Ss OCRA Authentication Module
+The OCRA authentication component
+.Pq Fn pam_sm_authenticate 
+obtains OCRA credentials from the the per-user file
+.Ar ~/.ocra . 
+If this fails and the 
+.Cm dir
+parameter is set,
+.Ar directory/USERNAME
+will be used. It then
+provides the user with an OCRA challenge and verifies the response.
+
+.Pp
+The following options may be passed to the authentication module:
+.Bl -tag -width ".Cm disallow"
+.It Cm dir Ns = Ns Ar directory 
+directory to search for OCRA credentials.
+.It Cm fake_prompt Ns = Ns Ar suite_string
+Use 
+.Ar suite_string
+to generate fake challenges for users who do not have OCRA credentials.
+Note that if this option is not set, no fake challenges will be generated
+which can leak information to a hypothetical attacker about who uses OCRA
+and who does not.
+.El
+.Sh FILES
+.Bl -tag -with Ds -compact
+.It Pa ~/.ocra
+.El
+OCRA credential file
+.Sh SEE ALSO
+.Xr pam.conf 5 ,
+.Xr pam 8,
+.Xr ocra_tool 1
+.Sh STANDARDS
+.Bl -tag -offset indent -width 8n
+.It Li RFC6287 
+.Em OCRA: OATH Challenge-Response Algorithm
+.Sh AUTHORS
+The
+.Nm
+module and this manual page were developed by Stefan Grundmann

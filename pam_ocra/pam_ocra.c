@@ -32,6 +32,7 @@
 
 #include <security/pam_modules.h>
 #include <security/pam_appl.h>
+#include <security/openpam.h>
 
 #include "ocra.h"
 
@@ -70,36 +71,55 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
     int argc, const char *argv[])
 {
 	int ret;
-	const char *path = NULL;
+	int faked = 0;
+	const char *dir = NULL;
+	const char *fake_suite = NULL;
 	char *questions;
 	char *user;
 	char *response = NULL;
 	char fmt[512];
 
 	(void)flags;
+	(void)argc;
+	(void)argv;
 
 	pam_get_item(pamh, PAM_USER, (const void **)&user);
 
 	openlog("pam_ocra", 0, LOG_AUTHPRIV);
-	if (argc)
-		path = argv[0];
-	if (PAM_SUCCESS != (ret = challenge(path, user, &questions))) {
-		syslog(LOG_INFO, "ocra challenge() returned %d", ret);
-		goto end;
+
+	fake_suite = openpam_get_option(pamh, "fake_prompt");
+	dir = openpam_get_option(pamh, "dir");
+	if (PAM_SUCCESS != (ret = challenge(dir, user, &questions))) {
+		if (PAM_NO_MODULE_DATA == ret && NULL != fake_suite) {
+			if (PAM_SUCCESS != (ret = fake_challenge(fake_suite, &questions)))
+				goto end;
+			faked = 1;
+		} else
+			goto end;
 	}
 	snprintf(fmt, 512, "OCRA Challenge: %s\nOCRA  Response: ", questions);
-	if (PAM_SUCCESS != (ret = get_response(pamh, fmt, &response))) {
-		syslog(LOG_INFO, "get_response() failed: %d", ret);
+	if (PAM_SUCCESS != (ret = get_response(pamh, fmt, &response)))
 		goto end;
-	}
-	if (PAM_SUCCESS != (ret = verify(path, user, questions, response)))
-		syslog(LOG_INFO, "ocra verify() returned %d", ret);
-
+	if (1 == faked)
+		ret = PAM_AUTH_ERR;
+	else
+		ret = verify(dir, user, questions, response);
 
 	free(response);
 end:
 	closelog();
 	return ret;
+}
+
+PAM_EXTERN int
+pam_sm_setcred(pam_handle_t *pamh, int flags, int argc, const char *argv[])
+{
+	(void)pamh;
+	(void)flags;
+	(void)argc;
+	(void)argv;
+
+	return PAM_SUCCESS;
 }
 
 #ifdef PAM_MODULE_ENTRY

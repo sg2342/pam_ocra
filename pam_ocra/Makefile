@@ -6,6 +6,7 @@ SHLIB=		pam_ocra
 SHLIB_NAME=	${SHLIB}.so.${SHLIB_MAJOR}
 SHLIB_MAJOR=	0
 SRCS=		pam_ocra.c ocra.c rfc6287.c
+MAN=		pam_ocra.8
 LIBDIR=		${PREFIX}/lib
 
 LDADD=		-lcrypto
