@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd September 26, 2014
+.Dd September 30, 2014
 .Dt PAM_OCRA 8
 .Os
 .Sh NAME
@@ -52,10 +52,10 @@ feature.
 It also provides null functions for the remaining module types.
 .Ss OCRA Authentication Module
 The OCRA authentication component
-.Pq Fn pam_sm_authenticate 
+.Pq Fn pam_sm_authenticate
 obtains OCRA credentials from the the per-user file
-.Ar ~/.ocra . 
-If this fails and the 
+.Ar ~/.ocra .
+If this fails and the
 .Cm dir
 parameter is set,
 .Ar directory/USERNAME
@@ -64,10 +64,10 @@ provides the user with an OCRA challenge and verifies the response.
 .Pp
 The following options may be passed to the authentication module:
 .Bl -tag -width ".Cm disallow"
-.It Cm dir Ns = Ns Ar directory 
+.It Cm dir Ns = Ns Ar directory
 directory to search for OCRA credentials.
 .It Cm fake_prompt Ns = Ns Ar suite_string
-Use 
+Use
 .Ar suite_string
 to generate fake challenges for users who do not have OCRA credentials.
 Note that if this option is not set, no fake challenges will be generated
@@ -82,10 +82,10 @@ OCRA credential file
 .Sh SEE ALSO
 .Xr pam.conf 5 ,
 .Xr pam 8 ,
-.Xr ocra_tool 1
+.Xr ocra_tool 8
 .Sh STANDARDS
 .Bl -tag -offset indent -width 8n
-.It Li RFC6287 
+.It Li RFC6287
 .Em OCRA: OATH Challenge-Response Algorithm
 .El
 .Sh AUTHORS

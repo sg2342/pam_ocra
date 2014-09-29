@@ -5,7 +5,7 @@ CFLAGS+=	-I${.CURDIR}/../common
 PROG=		ocra_tool
 SRCS=		ocra_tool.c rfc6287.c
 LDADD=		-lcrypto
-MK_MAN=		no
-BINDIR=		${PREFIX}/bin
+MAN=		${PROG}.8
+BINDIR=		${PREFIX}/sbin
 WARNS=		6
 .include <bsd.prog.mk>

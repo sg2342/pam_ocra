@@ -1,0 +1,142 @@
+.\" Copyright (c) 2014 Stefan Grundmann
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. The name of the author may not be used to endorse or promote
+.\"    products derived from this software without specific prior written
+.\"    permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"
+.Dd September 30, 2014
+.Dt OCRA_TOOL 8
+.Os
+.Sh NAME
+.Nm ocra_tool
+.Nd create and view OCRA credential files
+.Sh SYNOPSIS
+.Nm
+.Cm help
+.Nm
+.Cm info
+.Fl f
+.Ar credential_file
+.Nm
+.Cm init
+.Fl f
+.Ar credential_file
+.Fl s
+.Ar suite_string
+.Fl k
+.Ar key
+.Op Fl c Ar counter
+.Op Fl p Ar pin
+.Op Fl w Ar counter_window
+.Op Fl t Ar timestamp_offset
+.Sh DESCRIPTION
+The
+.Nm
+utility is used to initialize and view OCRA credential files used by the
+.Xr pam_ocra 8 authentication service module for PAM.
+.Bl -tag -width ".Cm help"
+.It Cm help
+List available commands and arguments.
+.It Cm info
+Show content of OCRA credential file.
+.Bl -tag -width ".FL f"
+.It Fl f Ar credential_file
+the OCRA credential file.
+.El
+.It Cm init
+Initialize OCRA credential file.
+.Bl -tag -width ".FL f"
+.It Fl f Ar credential_file
+the OCRA credential file.
+.It Fl s Ar suite_string
+OCRA suite string.
+.It Fl k Ar key
+specified as hexadecimal string (no leading '0x', not separated by ':').
+.It Fl c Ar counter
+If the
+.Ar suite_string
+requires a counter parameter,
+.Ar counter
+is the initial counter value.
+.It Fl p Ar pin
+If the
+.Ar suite_string
+requires a pin-hash parameter, the digest of
+.Ar pin
+is calculated using the pin-hash algorithm specified in
+.Ar suite_string .
+.It Fl w Ar counter_window
+If the
+.Ar suite_string
+requires a counter parameter,
+.Ar counter_window
+specifies the maximum number of verify attempts
+.Xr pam_ocra 8
+will make (while incrementing the counter value).
+This parameter is optional.
+.It Fl t Ar timestamp_offset
+If the
+.Ar suite_string
+requires a timestamp parameter,
+.Ar timestamp_offset
+specifies the number of timestamp steps
+.Xr pam_ocra 8
+will make while verifying a response. The verify process will start at
+(current_timestamp -
+.Ar timestamp_offset )
+and end at (current_timestamp +
+.Ar timestamp_offset ) .
+This parameter is optional.
+.El
+.El
+.Sh EXAMPLE
+$ ocra_tool init -f ~/.ocra -s OCRA-1:HOTP-SHA1-6:C-QN08-PSHA1 \\
+.sp 0
+        -k 00112233445566778899aabbccddeeff00112233 \\
+.sp 0
+        c 10 -p 1234 -w 50
+.sp 1
+$ ocra_tool info -f ~/.ocra
+.sp 0
+suite:          OCRA-1:HOTP-SHA1-6:C-QN08-PSHA1
+.sp 0
+key:            00112233445566778899aabbccddeeff00112233
+.sp 0
+counter:        10
+.sp 0
+counter_window: 50
+.sp 0
+pin_hash:       7110eda4d09e062aa5e4a390b0a572ac0d2c0220
+.Lp
+.Sh FILES
+.Bl -tag -width Ds -compact
+.It Pa ~/.ocra
+OCRA credential file
+.El
+.Sh SEE ALSO
+.Xr pam_ocra 8
+.Sh AUTHOR
+.Nm
+and this manual page were developed by Stefan Grundmann.
