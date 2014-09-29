@@ -105,12 +105,12 @@ cmd_help()
 	printf(
 	    "%s: create db files used by pam_ocra\n"
 	    "Help: %s help\n"
-	    "Info: %s info -f <ocra_db_file>\n"
-	    "Init: %s init -f <ocra_db_file> -s <suite_string> -k <key> ... \n"
+	    "Info: %s info -f <credentials_file>\n"
+	    "Init: %s init -f <credentials_file> -s <suite_string> -k <key> ... \n"
 	    " ... [-c <counter>] [-p <pin>] [-w <counter_window>] [-t <timestamp_offset>]\n\n",
 	    pn, pn, pn, pn);
 	printf(
-	    " <ocra_db_file> - where the OCRA suite information of a user is stored\n"
+	    " <credentials_file> - where the OCRA suite information of a user is stored\n"
 	    "\tpam_ocra looks in $HOME/.ocra and $OCRA_DB_DIR/$USER\n"
 	    " <suite_string> - the RFC6287 OCRA Suite\n"
 	    " <key> - hex encoded key (size depends on CryptoFunction of in OCRA suite\n"
@@ -235,7 +235,7 @@ test_input(const ocra_suite * ocra, const char *suite_string,
 
 	if (RFC6287_SUCCESS != (r = rfc6287_verify(ocra, suite_string, key, key_l, C, questions, P,
 	    P_l, NULL, 0, T, response, counter_window, &next_counter, timestamp_offset)))
-		errx(EX_SOFTWARE, "rfc6287_verify() failedi: %s", rfc6287_err(r));
+		errx(EX_SOFTWARE, "rfc6287_verify() failed: %s", rfc6287_err(r));
 
 	free(response);
 	free(questions);
@@ -274,7 +274,7 @@ write_db(const char *fname, const char *suite_string,
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		err(EX_OSERR, "db->put() failed");
 
-	KEY(K, "V");
+	KEY(K, "P");
 	V.data = (void *)P;
 	V.size = P_l;
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
