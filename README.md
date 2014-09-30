@@ -12,11 +12,7 @@ Limitations
 Installation
 ----------------
 
-Use the FreeBSD port:
-
-    $ git clone https://github.com/sg2342/freebsd_port-pam_ocra pam_ocra
-    $ cd pam_ocra
-    $ make install
+Use the FreeBSD port security/pam_ocra
 
 Basic Use
 --------------
