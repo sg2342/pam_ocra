@@ -8,6 +8,7 @@ SHLIB_MAJOR=	0
 SRCS=		pam_ocra.c ocra.c rfc6287.c
 MAN=		pam_ocra.8
 LIBDIR=		${PREFIX}/lib
+MANDIR=		${PREFIX}/man/man
 
 LDADD=		-lcrypto
 

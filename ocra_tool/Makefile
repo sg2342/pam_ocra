@@ -7,5 +7,6 @@ SRCS=		ocra_tool.c rfc6287.c
 LDADD=		-lcrypto
 MAN=		${PROG}.8
 BINDIR=		${PREFIX}/sbin
+MANDIR=		${PREFIX}/man/man
 WARNS=		6
 .include <bsd.prog.mk>
