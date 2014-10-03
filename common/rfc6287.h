@@ -31,7 +31,7 @@ typedef struct ocra_suite_struct {
 	/* DataInput */
 	int	 flags;
 	enum fmt Q_fmt;
-	size_t	 Q_l;
+	int	 Q_l;
 	enum alg P_alg;
 	size_t	 S_l;
 	int	 T_step;

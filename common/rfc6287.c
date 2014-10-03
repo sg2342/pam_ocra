@@ -28,6 +28,7 @@
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <sys/time.h>
+#include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -322,7 +323,7 @@ truncate_md(const uint8_t *md, size_t md_l, int len, char **resp)
 	if (NULL == (*resp = (char *)malloc(len + 1)))
 		return RFC6287_ERR_POSIX;
 
-	snprintf(*resp, len + 1, "%.*lu", len, v);
+	snprintf(*resp, len + 1, "%.*"PRIu64"u", len, v);
 	return 0;
 }
 
@@ -331,7 +332,7 @@ check_di_params(const ocra_suite * ocra, size_t key_l, const char *Q,
     size_t P_l, size_t S_l, uint64_t T)
 {
 	if ((key_l != mdlen(ocra->hotp_alg)) ||
-	    (strlen(Q) < ocra->Q_l) ||
+	    (strlen(Q) < (size_t)(ocra->Q_l)) ||
 	    (64 < strlen(Q)) ||
 	    ((ocra->flags & FL_P) && (P_l != mdlen(ocra->P_alg))) ||
 	    ((ocra->flags & FL_S) && (S_l != ocra->S_l)) ||
@@ -398,7 +399,8 @@ verify_c(const ocra_suite * ocra, off_t C_off, const uint8_t *key, size_t key_l,
 	do {
 		st64be(buf + C_off, *next_C);
 		(*next_C)++;
-		if (RFC6287_VERIFY_FAILED != (ret = verify(ocra, key, key_l, buf, buf_l, resp)))
+		if (RFC6287_VERIFY_FAILED !=
+		    (ret = verify(ocra, key, key_l, buf, buf_l, resp)))
 			break;
 	} while (*next_C != (C + counter_window));
 	return ret;
@@ -578,7 +580,7 @@ out:
 int
 rfc6287_challenge(const ocra_suite * ocra, char **questions)
 {
-	uint32_t i;
+	int i;
 	uint8_t buf[64];
 
 	if (1 != RAND_bytes(buf, sizeof(buf)))
