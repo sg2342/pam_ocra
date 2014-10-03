@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <inttypes.h>
 #include <err.h>
 #include <errno.h>
 #include <sysexits.h>
@@ -148,7 +149,7 @@ C1_2(void)
 		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key32, 32, C, Q, pinhash, 20, NULL, 0, 0, &RR)))
 			errx(EX_SOFTWARE, "in C1_2: rfc6287_ocra() failed: %d", ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (C=%lu, Q=%s, R=%s)\n", ++failed, suite, C, Q, R);
+			printf(" fail (%d)\t%s (C=%"PRIu64"u, Q=%s, R=%s)\n", ++failed, suite, C, Q, R);
 		free(RR);
 	}
 }
@@ -214,7 +215,7 @@ C1_4(void)
 		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key64, 64, C, Q, NULL, 0, NULL, 0, 0, &RR)))
 			errx(EX_SOFTWARE, "in C1_4: rfc6287_ocra() failed: %d", ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (C=%lu Q=%s, R=%s)\n", ++failed, suite, C, Q, R);
+			printf(" fail (%d)\t%s (C=%"PRIu64"u Q=%s, R=%s)\n", ++failed, suite, C, Q, R);
 		free(RR);
 	}
 }
