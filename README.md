@@ -36,6 +36,19 @@ Changelog
 
 - 1.1:
 
+  * change ocra_tool(8) command line interface:
+    - 'help' command removed
+    - 'init' -P pinhash option added
+    - 'init' -c option now also accepts hex counters
+    - 'info' output format changed
+
+  * fix ocra_tool counter input:
+    the -c counter option did not work for the whole value range of the counter
+    paramter.
+
+  * fix gcc builds:
+    which where broken due to (cast-qual, format, sign-compare, ...) warnings.
+
   * fix timstamp_offset verification:
     broken termination condition in timstamp_offset verify loop did not
     account for timstamp_offset==0. The result was that verification would
