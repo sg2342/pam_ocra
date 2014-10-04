@@ -28,6 +28,8 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <inttypes.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <err.h>
@@ -67,6 +69,34 @@ pin_hash(const ocra_suite * ocra, const char *pin, uint8_t **P, size_t *P_l)
 }
 
 static int
+parse_counter(const char* in, uint64_t *C)
+{
+	char *stopped;
+	int base = strncmp("0x", in, 2) ? 10 : 16;
+
+	if ('-' == in[0])
+		return -1;
+	*C = strtouq(in, &stopped, base);
+	if (ULLONG_MAX == *C || 0 == *C) {
+		if (errno) return -1;
+	}
+	if (*stopped)
+		return -1;
+	return 0;
+}
+
+static int
+parse_num(const char* in)
+{
+	char *stopped;
+	int x = (int)strtol(in, &stopped, 10);
+
+	if (*stopped || (0 > x))
+		return -1;
+	return 0;
+}
+
+static int
 key_from_hex(const ocra_suite * ocra, const char *key_string,
     uint8_t **key, size_t *key_l)
 {
@@ -79,7 +109,8 @@ key_from_hex(const ocra_suite * ocra, const char *key_string,
 	if (NULL == (*key = (uint8_t *)malloc(*key_l)))
 		return -1;
 	for (i = 0; *key_l > i; i++)
-		if (1 != sscanf(&key_string[i * 2], "%2hhx", *key + i)) {
+		if (1 != sscanf(&key_string[i * 2], "%2hhx", *key + i)||
+		    (!ishexnumber(key_string[(i * 2) + 1]))) {
 			free(*key);
 			return -1;
 		}
@@ -185,7 +216,7 @@ cmd_info(int argc, char **argv)
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
 			    (1 == ret) ? "key not in db" : strerror(errno));
-		printf("counter:\t%d\n", ((int *)(V.data))[0]);
+		printf("counter:\t%" PRIu64 "\n", ((uint64_t *)(V.data))[0]);
 
 		KEY(K, "counter_window");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
@@ -372,7 +403,7 @@ cmd_init(int argc, char **argv)
 		if (NULL == counter_string)
 			errx(EX_CONFIG, "suite requires counter parameter "
 			    "(-c <counter> missing)");
-		if (-1 == (C = parse_num(counter_string)))
+		if (-1 == parse_counter(counter_string, &C))
 			errx(EX_CONFIG, "invalid counter value");
 		if (NULL != counter_window_string)
 			if (-1 ==

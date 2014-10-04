@@ -37,9 +37,6 @@ typedef struct ocra_suite_struct {
 	int	 T_step;
 }	ocra_suite;
 
-int parse_num(
-	const char *);
-
 const char * rfc6287_err(int e);
 
 int rfc6287_timestamp(

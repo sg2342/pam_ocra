@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd September 30, 2014
+.Dd October 4, 2014
 .Dt OCRA_TOOL 8
 .Os
 .Sh NAME
@@ -79,7 +79,9 @@ If the
 .Ar suite_string
 requires a counter parameter,
 .Ar counter
-is the initial counter value.
+is the initial counter value. If
+.Ar counter
+begins with '0x' it will be interpreted as hexadecimal number.
 .It Fl p Ar pin
 If the
 .Ar suite_string

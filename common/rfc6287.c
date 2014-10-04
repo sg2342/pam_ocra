@@ -85,7 +85,7 @@ parse_alg(const char *in)
 	return none;
 }
 
-int
+static int
 parse_num(const char *in)
 {
 	char *stopped;
