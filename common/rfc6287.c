@@ -226,8 +226,10 @@ hex2bin(uint8_t *out, const char *in)
 {
 	int ret, l, g;
 	char *tmp = NULL;
-	char *tofree = NULL;
 	BIGNUM *B;
+
+	if (NULL == (B = BN_new()))
+		return RFC6287_ERR_OPENSSL;
 
 	if ((g = strlen(in)) % 2) {	/* pad hex string to even length */
 		if (NULL == (tmp = (char *)malloc(g + 2)))
@@ -235,12 +237,11 @@ hex2bin(uint8_t *out, const char *in)
 		memcpy(tmp, in, g);
 		tmp[g] = '0';
 		tmp[g + 1] = 0;
-		tofree = tmp;
-	} else
-		tmp = (char *)in;
-
-	if ((NULL == (B = BN_new())) ||
-	    (0 == BN_hex2bn(&B, (const char *)tmp))) {
+		if (0 == BN_hex2bn(&B, (const char*)tmp)) {
+			ret = RFC6287_ERR_OPENSSL;
+			goto err;
+		}
+	} else if (0 == BN_hex2bn(&B, in)) {
 		ret = RFC6287_ERR_OPENSSL;
 		goto err;
 	}
@@ -251,7 +252,7 @@ hex2bin(uint8_t *out, const char *in)
 	BN_bn2bin(B, out);
 	ret = l;
 err:
-	free(tofree);
+	free(tmp);
 	if (NULL != B)
 		BN_free(B);
 	return ret;
@@ -365,7 +366,7 @@ verify(const ocra_suite * ocra, const uint8_t *key, size_t key_l,
 
 	HMAC_CTX_init(&ctx);
 	if ((1 != HMAC_Init(&ctx, key, key_l, evp_md(ocra->hotp_alg))) ||
-	    (1 != HMAC_Update(&ctx, (unsigned char *)buf, (int)buf_l)) ||
+	    (1 != HMAC_Update(&ctx, buf, (int)buf_l)) ||
 	    (1 != HMAC_Final(&ctx, md, &md_l)) ||
 	    (md_l != mdlen(ocra->hotp_alg))) {
 		HMAC_CTX_cleanup(&ctx);
@@ -474,16 +475,13 @@ rfc6287_ocra(const ocra_suite * ocra, const char *suite_string,
 
 	HMAC_CTX_init(&ctx);
 	if ((1 != HMAC_Init(&ctx, key, key_l, evp_md(ocra->hotp_alg))) ||
-	    (1 != HMAC_Update(&ctx, (unsigned char *)suite_string, suite_l)) ||
-	    ((flags & FL_C) &&
-		(1 != HMAC_Update(&ctx, (unsigned char *)CBE, 8))) ||
-	    (1 != HMAC_Update(&ctx, (unsigned char *)qbuf, 128)) ||
-	    ((flags & FL_P) &&
-		(1 != HMAC_Update(&ctx, (unsigned char *)P, P_l))) ||
-	    ((flags & FL_S) &&
-		(1 != HMAC_Update(&ctx, (unsigned char *)S, S_l))) ||
-	    ((flags & FL_T) &&
-		(1 != HMAC_Update(&ctx, (unsigned char *)TBE, 8))) ||
+	    (1 !=
+		HMAC_Update(&ctx, (const uint8_t *)suite_string, suite_l)) ||
+	    ((flags & FL_C) && (1 != HMAC_Update(&ctx, CBE, 8))) ||
+	    (1 != HMAC_Update(&ctx, qbuf, 128)) ||
+	    ((flags & FL_P) && (1 != HMAC_Update(&ctx, P, P_l))) ||
+	    ((flags & FL_S) && (1 != HMAC_Update(&ctx, S, S_l))) ||
+	    ((flags & FL_T) && (1 != HMAC_Update(&ctx, TBE, 8))) ||
 	    (NULL == (md = (uint8_t *)malloc(mdlen(ocra->hotp_alg)))) ||
 	    (1 != HMAC_Final(&ctx, md, &md_l)) ||
 	    (md_l != mdlen(ocra->hotp_alg))) {
