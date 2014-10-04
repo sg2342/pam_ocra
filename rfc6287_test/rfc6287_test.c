@@ -54,10 +54,10 @@ void	C2_2(void);
 void	C2_3(void);
 void	C3_1(void);
 void	C3_2(void);
-void	verify1(void);
-void	verify2(void);
-void	verify3(void);
-void	verify4(void);
+void	V_1(void);
+void	V_2(void);
+void	V_3(void);
+void	V_4(void);
 
 static const uint8_t Key20[] = {
 	0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x30,
@@ -106,17 +106,21 @@ C1_1(void)
 	ocra_suite ocra;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in C1_1: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in C1_1: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	for (i = 0; 10 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
 
-		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key20, 20, 0, Q, NULL, 0, NULL, 0, 0, &RR)))
-			errx(EX_SOFTWARE, "in C1_1: rfc6287_ocra() failed: %d", ret);
+		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite,
+		    Key20, 20, 0, Q, NULL, 0, NULL, 0, 0, &RR)))
+			errx(EX_SOFTWARE, "in C1_1: rfc6287_ocra() failed: %d",
+			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed, suite, Q, R);
+			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed,
+			    suite, Q, R);
 		free(RR);
 	}
 }
@@ -144,16 +148,20 @@ C1_2(void)
 
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in C1_2: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in C1_2: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	for (C = 0; 10 > C; C++) {
 		const char *R = tv[C];
 		char *RR;
 
-		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key32, 32, C, Q, pinhash, 20, NULL, 0, 0, &RR)))
-			errx(EX_SOFTWARE, "in C1_2: rfc6287_ocra() failed: %d", ret);
+		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite,
+		    Key32, 32, C, Q, pinhash, 20, NULL, 0, 0, &RR)))
+			errx(EX_SOFTWARE, "in C1_2: rfc6287_ocra() failed: %d",
+			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (C=%" PRIu64 "u, Q=%s, R=%s)\n", ++failed, suite, C, Q, R);
+			printf(" fail (%d)\t%s (C=%" PRIu64 "u, Q=%s, R=%s)\n",
+			    ++failed, suite, C, Q, R);
 		free(RR);
 	}
 }
@@ -173,17 +181,21 @@ C1_3(void)
 	ocra_suite ocra;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in C1_3: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in C1_3: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
 
-		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key32, 32, 0, Q, pinhash, 20, NULL, 0, 0, &RR)))
-			errx(EX_SOFTWARE, "in C1_3: rfc6287_ocra() failed: %d", ret);
+		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite,
+		    Key32, 32, 0, Q, pinhash, 20, NULL, 0, 0, &RR)))
+			errx(EX_SOFTWARE, "in C1_3: rfc6287_ocra() failed: %d",
+			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed, suite, Q, R);
+			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed,
+			    suite, Q, R);
 		free(RR);
 	}
 }
@@ -209,17 +221,21 @@ C1_4(void)
 	ocra_suite ocra;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in C1_4: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in C1_4: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	for (C = 0; 10 > C; C++) {
 		const char *Q = tv[C][0];
 		const char *R = tv[C][1];
 		char *RR;
 
-		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key64, 64, C, Q, NULL, 0, NULL, 0, 0, &RR)))
-			errx(EX_SOFTWARE, "in C1_4: rfc6287_ocra() failed: %d", ret);
+		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite,
+		    Key64, 64, C, Q, NULL, 0, NULL, 0, 0, &RR)))
+			errx(EX_SOFTWARE, "in C1_4: rfc6287_ocra() failed: %d",
+			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (C=%" PRIu64 "u Q=%s, R=%s)\n", ++failed, suite, C, Q, R);
+			printf(" fail (%d)\t%s (C=%" PRIu64 "u Q=%s, R=%s)\n",
+			    ++failed, suite, C, Q, R);
 		free(RR);
 	}
 }
@@ -240,17 +256,21 @@ C1_5(void)
 	ocra_suite ocra;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in C1_5: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in C1_5: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
 
-		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key64, 64, 0, Q, NULL, 0, NULL, 0, T, &RR)))
-			errx(EX_SOFTWARE, "in C1_5: rfc6287_ocra() failed: %d", ret);
+		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key64,
+		    64, 0, Q, NULL, 0, NULL, 0, T, &RR)))
+			errx(EX_SOFTWARE, "in C1_5: rfc6287_ocra() failed: %d",
+			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed, suite, Q, R);
+			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed,
+			    suite, Q, R);
 		free(RR);
 	}
 }
@@ -275,17 +295,21 @@ C2_1(void)
 	ocra_suite ocra;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in C2_1: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in C2_1: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	for (i = 0; 10 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
 
-		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key32, 32, 0, Q, NULL, 0, NULL, 0, 0, &RR)))
-			errx(EX_SOFTWARE, "in C2_1: rfc6287_ocra() failed: %d", ret);
+		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite,
+		    Key32, 32, 0, Q, NULL, 0, NULL, 0, 0, &RR)))
+			errx(EX_SOFTWARE, "in C2_1: rfc6287_ocra() failed: %d",
+			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed, suite, Q, R);
+			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed,
+			    suite, Q, R);
 		free(RR);
 	}
 }
@@ -305,17 +329,21 @@ C2_2(void)
 	ocra_suite ocra;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in C2_2: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in C2_2: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
 
-		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key64, 64, 0, Q, NULL, 0, NULL, 0, 0, &RR)))
-			errx(EX_SOFTWARE, "in C2_2: rfc6287_ocra() failed: %d", ret);
+		if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite,
+		    Key64, 64, 0, Q, NULL, 0, NULL, 0, 0, &RR)))
+			errx(EX_SOFTWARE, "in C2_2: rfc6287_ocra() failed: %d",
+			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed, suite, Q, R);
+			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed,
+			    suite, Q, R);
 		free(RR);
 	}
 }
@@ -335,17 +363,21 @@ C2_3(void)
 	ocra_suite ocra;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in C2_3: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in C2_3: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
 
-		if (0 != (ret = rfc6287_ocra(&ocra, suite, Key64, 64, 0, Q, pinhash, 20, NULL, 0, 0, &RR)))
-			errx(EX_SOFTWARE, "in C2_3: rfc6287_ocra() failed: %d", ret);
+		if (0 != (ret = rfc6287_ocra(&ocra, suite, Key64, 64, 0, Q,
+		    pinhash, 20, NULL, 0, 0, &RR)))
+			errx(EX_SOFTWARE, "in C2_3: rfc6287_ocra() failed: %d",
+			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed, suite, Q, R);
+			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed,
+			    suite, Q, R);
 		free(RR);
 	}
 }
@@ -365,17 +397,21 @@ C3_1(void)
 	ocra_suite ocra;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in C3_1 rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in C3_1 rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
 
-		if (0 != (ret = rfc6287_ocra(&ocra, suite, Key32, 32, 0, Q, NULL, 0, NULL, 0, 0, &RR)))
-			errx(EX_SOFTWARE, "in C2_2: rfc6287_ocra() failed: %d", ret);
+		if (0 != (ret = rfc6287_ocra(&ocra, suite, Key32, 32, 0, Q,
+		    NULL, 0, NULL, 0, 0, &RR)))
+			errx(EX_SOFTWARE, "in C2_2: rfc6287_ocra() failed: %d",
+			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed, suite, Q, R);
+			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed,
+			    suite, Q, R);
 		free(RR);
 	}
 }
@@ -396,23 +432,27 @@ C3_2(void)
 	uint64_t T = 0x132d0b6;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in C3_2 rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in C3_2 rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	for (i = 0; 5 > i; i++) {
 		const char *Q = tv[i][0];
 		const char *R = tv[i][1];
 		char *RR;
 
-		if (0 != (ret = rfc6287_ocra(&ocra, suite, Key64, 64, 0, Q, NULL, 0, NULL, 0, T, &RR)))
-			errx(EX_SOFTWARE, "in C3_2: rfc6287_ocra() failed: %d", ret);
+		if (0 != (ret = rfc6287_ocra(&ocra, suite, Key64, 64,
+		    0, Q, NULL, 0, NULL, 0, T, &RR)))
+			errx(EX_SOFTWARE, "in C3_2: rfc6287_ocra() failed: %d",
+			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed, suite, Q, R);
+			printf(" fail (%d)\t%s (Q=%s, R=%s)\n", ++failed,
+			    suite, Q, R);
 		free(RR);
 	}
 }
 
 void
-verify1(void)
+V_1(void)
 {
 	const char suite[] = "OCRA-1:HOTP-SHA256-8:QA08";
 	char *Q;
@@ -422,22 +462,25 @@ verify1(void)
 	int ret;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in verify1: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in V_1: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_challenge(&ocra, &Q)))
-		errx(EX_SOFTWARE, "in verify1: rfc6287_challenge() failed: %d", ret);
-	if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key32, 32, 0, Q, NULL, 0, NULL, 0, 0, &R)))
-		errx(EX_SOFTWARE, "in verify1: rfc6287_ocra() failed: %d", ret);
-	if (0 > (ret = rfc6287_verify(&ocra, suite, Key32, 32, 0, Q, NULL, 0, NULL, 0, 0, R, 0, &NC, 0)))
-		errx(EX_SOFTWARE, "in verify1: rfc6287_verify() failed: %d", ret);
+		errx(EX_SOFTWARE, "in V_1: rfc6287_challenge() failed: %d", ret);
+	if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key32, 32,
+	    0, Q, NULL, 0, NULL, 0, 0, &R)))
+		errx(EX_SOFTWARE, "in V_1: rfc6287_ocra() failed: %d", ret);
+	if (0 > (ret = rfc6287_verify(&ocra, suite, Key32, 32, 0, Q, NULL, 0,
+	    NULL, 0, 0, R, 0, &NC, 0)))
+		errx(EX_SOFTWARE, "in V_1: rfc6287_verify() failed: %d", ret);
 	if (RFC6287_VERIFY_FAILED == ret)
-		printf(" verify1 failed (%d)\t%s\n", ++failed, suite);
+		printf(" V_1 failed (%d)\t%s\n", ++failed, suite);
 	free(Q);
 	free(R);
 }
 
 void
-verify2(void)
+V_2(void)
 {
 	const char suite[] = "OCRA-1:HOTP-SHA512-0:QA08-T1S";
 	char *Q;
@@ -448,30 +491,36 @@ verify2(void)
 	int ret;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in verify2: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in V_2: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_challenge(&ocra, &Q)))
-		errx(EX_SOFTWARE, "in verify2: rfc6287_challenge() failed: %d", ret);
+		errx(EX_SOFTWARE, "in V_2: rfc6287_challenge() failed: %d",
+		    ret);
 	if (RFC6287_SUCCESS != (ret = rfc6287_timestamp(&ocra, &T)))
-		errx(EX_SOFTWARE, "in verify2: rfc6287_timestamp() failed: %d", ret);
-	if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key64, 64, 0, Q, NULL, 0, NULL, 0, T, &R)))
-		errx(EX_SOFTWARE, "in verify2: rfc6287_ocra() failed: %d", ret);
+		errx(EX_SOFTWARE, "in V_2: rfc6287_timestamp() failed: %d",
+		    ret);
+	if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key64, 64,
+	    0, Q, NULL, 0, NULL, 0, T, &R)))
+		errx(EX_SOFTWARE, "in V_2: rfc6287_ocra() failed: %d", ret);
 	/* no timestamp_offset */
-	if (0 > (ret = rfc6287_verify(&ocra, suite, Key64, 64, 0, Q, NULL, 0, NULL, 0, T + 100, R, 0, &NC, 0)))
-		errx(EX_SOFTWARE, "in verify2: rfc6287_verify() failed: %d", ret);
+	if (0 > (ret = rfc6287_verify(&ocra, suite, Key64, 64, 0, Q, NULL,
+	    0, NULL, 0, T + 100, R, 0, &NC, 0)))
+		errx(EX_SOFTWARE, "in V_2: rfc6287_verify() failed: %d", ret);
 	if (RFC6287_VERIFY_FAILED != ret)
-		printf(" verify2 failed(A) (%d)\t%s\n", ++failed, suite);
+		printf(" V_2 failed(A) (%d)\t%s\n", ++failed, suite);
 	/* timestamp_offset */
-	if (0 > (ret = rfc6287_verify(&ocra, suite, Key64, 64, 0, Q, NULL, 0, NULL, 0, T - 100, R, 0, &NC, 120)))
-		errx(EX_SOFTWARE, "in verify2: rfc6287_verify() failed: %d", ret);
+	if (0 > (ret = rfc6287_verify(&ocra, suite, Key64, 64, 0, Q, NULL,
+	    0, NULL, 0, T - 100, R, 0, &NC, 120)))
+		errx(EX_SOFTWARE, "in V_2: rfc6287_verify() failed: %d", ret);
 	if (RFC6287_VERIFY_FAILED == ret)
-		printf(" verify2 failed(B) (%d)\t%s\n", ++failed, suite);
+		printf(" V_2 failed(B) (%d)\t%s\n", ++failed, suite);
 	free(Q);
 	free(R);
 }
 
 void
-verify3(void)
+V_3(void)
 {
 	const char suite[] = "OCRA-1:HOTP-SHA1-0:C-QH18";
 	char *Q;
@@ -481,28 +530,33 @@ verify3(void)
 	int ret;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in verify3: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in V_3: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_challenge(&ocra, &Q)))
-		errx(EX_SOFTWARE, "in verify3: rfc6287_challenge() failed: %d", ret);
-	if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key20, 20, 23, Q, NULL, 0, NULL, 0, 0, &R)))
-		errx(EX_SOFTWARE, "in verify3: rfc6287_ocra() failed: %d", ret);
+		errx(EX_SOFTWARE, "in V_3: rfc6287_challenge() failed: %d",
+		    ret);
+	if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key20, 20,
+	    23, Q, NULL, 0, NULL, 0, 0, &R)))
+		errx(EX_SOFTWARE, "in V_3: rfc6287_ocra() failed: %d", ret);
 	/* no counter_window */
-	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL, 0, NULL, 0, 0, R, 0, &NC, 0)))
-		errx(EX_SOFTWARE, "in verify3: rfc6287_verify() failed: %d", ret);
+	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL,
+	    0, NULL, 0, 0, R, 0, &NC, 0)))
+		errx(EX_SOFTWARE, "in V_3: rfc6287_verify() failed: %d", ret);
 	if (RFC6287_VERIFY_FAILED != ret)
-		printf(" verify3 failed(A) (%d)\t%s\n", ++failed, suite);
+		printf(" V_3 failed(A) (%d)\t%s\n", ++failed, suite);
 	/* counter_window */
-	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL, 0, NULL, 0, 0, R, 100, &NC, 0)))
-		errx(EX_SOFTWARE, "in verify3: rfc6287_verify() failed: %d", ret);
+	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL,
+	    0, NULL, 0, 0, R, 100, &NC, 0)))
+		errx(EX_SOFTWARE, "in V_3: rfc6287_verify() failed: %d", ret);
 	if (RFC6287_VERIFY_FAILED == ret || 24 != NC)
-		printf(" verify3 failed(B) (%d)\t%s\n", ++failed, suite);
+		printf(" V_3 failed(B) (%d)\t%s\n", ++failed, suite);
 	free(Q);
 	free(R);
 }
 
 void
-verify4(void)
+V_4(void)
 {
 	const char suite[] = "OCRA-1:HOTP-SHA1-0:C-QN13-T1M";
 	char *Q;
@@ -513,34 +567,42 @@ verify4(void)
 	int ret;
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, suite)))
-		errx(EX_SOFTWARE, "in verify4: rfc6287_parse_suite() failed: %d", ret);
+		errx(EX_SOFTWARE, "in V_4: rfc6287_parse_suite() failed: %d",
+		    ret);
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_challenge(&ocra, &Q)))
-		errx(EX_SOFTWARE, "in verify4: rfc6287_challenge() failed: %d", ret);
+		errx(EX_SOFTWARE, "in V_4: rfc6287_challenge() failed: %d",
+		    ret);
 	if (RFC6287_SUCCESS != (ret = rfc6287_timestamp(&ocra, &T)))
-		errx(EX_SOFTWARE, "in verify2: rfc6287_timestamp() failed: %d", ret);
-	if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key20, 20, 23, Q, NULL, 0, NULL, 0, T, &R)))
-		errx(EX_SOFTWARE, "in verify4: rfc6287_ocra() failed: %d", ret);
+		errx(EX_SOFTWARE, "in V_2: rfc6287_timestamp() failed: %d",
+		    ret);
+	if (RFC6287_SUCCESS != (ret = rfc6287_ocra(&ocra, suite, Key20, 20,
+	    23, Q, NULL, 0, NULL, 0, T, &R)))
+		errx(EX_SOFTWARE, "in V_4: rfc6287_ocra() failed: %d", ret);
 	/* no counter_window, no timestamp_offset */
-	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL, 0, NULL, 0, T + 5, R, 0, &NC, 0)))
-		errx(EX_SOFTWARE, "in verify4: rfc6287_verify() failed: %d", ret);
+	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL, 0,
+	    NULL, 0, T + 5, R, 0, &NC, 0)))
+		errx(EX_SOFTWARE, "in V_4: rfc6287_verify() failed: %d", ret);
 	if (RFC6287_VERIFY_FAILED != ret)
-		printf(" verify4 failed(A) (%d)\t%s\n", ++failed, suite);
+		printf(" V_4 failed(A) (%d)\t%s\n", ++failed, suite);
 	/* counter_window, no timestamp_offset */
-	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL, 0, NULL, 0, T + 5, R, 120, &NC, 0)))
-		errx(EX_SOFTWARE, "in verify4: rfc6287_verify() failed: %d", ret);
+	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL, 0,
+	    NULL, 0, T + 5, R, 120, &NC, 0)))
+		errx(EX_SOFTWARE, "in V_4: rfc6287_verify() failed: %d", ret);
 	if (RFC6287_VERIFY_FAILED != ret)
-		printf(" verify4 failed(B) (%d)\t%s\n", ++failed, suite);
+		printf(" V_4 failed(B) (%d)\t%s\n", ++failed, suite);
 	/* no counter_window, timestamp_offset */
-	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL, 0, NULL, 0, T + 5, R, 0, &NC, 10)))
-		errx(EX_SOFTWARE, "in verify4: rfc6287_verify() failed: %d", ret);
+	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL, 0,
+	    NULL, 0, T + 5, R, 0, &NC, 10)))
+		errx(EX_SOFTWARE, "in V_4: rfc6287_verify() failed: %d", ret);
 	if (RFC6287_VERIFY_FAILED != ret)
-		printf(" verify4 failed(C) (%d)\t%s\n", ++failed, suite);
+		printf(" V_4 failed(C) (%d)\t%s\n", ++failed, suite);
 	/* counter_window and timestamp_offset */
-	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL, 0, NULL, 0, T + 5, R, 120, &NC, 10)))
-		errx(EX_SOFTWARE, "in verify4: rfc6287_verify() failed: %d", ret);
+	if (0 > (ret = rfc6287_verify(&ocra, suite, Key20, 20, 1, Q, NULL, 0,
+	    NULL, 0, T + 5, R, 120, &NC, 10)))
+		errx(EX_SOFTWARE, "in V_4: rfc6287_verify() failed: %d", ret);
 	if (RFC6287_VERIFY_FAILED == ret || 24 != NC)
-		printf(" verify4 failed(D) (%d)\t%s\n", ++failed, suite);
+		printf(" V_4 failed(D) (%d)\t%s\n", ++failed, suite);
 	free(Q);
 	free(R);
 }
@@ -561,10 +623,10 @@ main(int argc, char **argv)
 	C2_3();
 	C3_1();
 	C3_2();
-	verify1();
-	verify2();
-	verify3();
-	verify4();
+	V_1();
+	V_2();
+	V_3();
+	V_4();
 	if (0 == failed)
 		printf("passed\n");
 	return failed;

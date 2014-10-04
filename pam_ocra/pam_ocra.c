@@ -91,7 +91,8 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	dir = openpam_get_option(pamh, "dir");
 	if (PAM_SUCCESS != (ret = challenge(dir, user, &questions))) {
 		if (PAM_NO_MODULE_DATA == ret && NULL != fake_suite) {
-			if (PAM_SUCCESS != (ret = fake_challenge(fake_suite, &questions)))
+			if (PAM_SUCCESS !=
+			    (ret = fake_challenge(fake_suite, &questions)))
 				goto end;
 			faked = 1;
 		} else

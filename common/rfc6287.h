@@ -43,39 +43,39 @@ int parse_num(
 const char * rfc6287_err(int e);
 
 int rfc6287_timestamp(
-		const ocra_suite * ocra,
-		uint64_t *timestamp);
+	const ocra_suite * ocra,
+	uint64_t *timestamp);
 
 int rfc6287_parse_suite(
-		ocra_suite *ocra,
-		const char *suite_string);
+	ocra_suite *ocra,
+	const char *suite_string);
 
 int rfc6287_challenge(
-		const ocra_suite *ocra,
-		char **questions);
+	const ocra_suite *ocra,
+	char **questions);
 
 int rfc6287_ocra(
-		const ocra_suite *ocra,
-		const char *suite_string,
-		const uint8_t *key, size_t key_len,
-		uint64_t C, 			/* 0 if no C param in suite */
-		const char *Q,
-		const uint8_t *P, size_t P_len, /* NULL, 0 if no P param in suite */
-		const uint8_t *S, size_t S_len, /* NULL, 0 if no S param in suite */
-		uint64_t T, 			/* 0 if no T param in suite */
-		char **response);
+	const ocra_suite *ocra,
+	const char *suite_string,
+	const uint8_t *key, size_t key_len,
+	uint64_t C, 			/* 0 if no C param in suite */
+	const char *Q,
+	const uint8_t *P, size_t P_len, /* NULL, 0 if no P param in suite */
+	const uint8_t *S, size_t S_len, /* NULL, 0 if no S param in suite */
+	uint64_t T, 			/* 0 if no T param in suite */
+	char **response);
 
 int rfc6287_verify(
-		const ocra_suite *ocra,
-		const char *suite_string,
-		const uint8_t *key, size_t key_len,
-		uint64_t C, 			/* 0 if no C param in suite */
-		const char *Q,
-		const uint8_t *P, size_t P_len, /* NULL, 0 if no P param in suite */
-		const uint8_t *S, size_t S_len, /* NULL, 0 if no S param in suite */
-		uint64_t T, 			/* 0 if no T param in suite */
-		const char *response,
-		uint32_t counter_window, 	/* 0 if no C param in suite */
-		uint64_t *next_counter,
-		uint32_t timestamp_offset); 	/* 0 if no T param in suite */
+	const ocra_suite *ocra,
+	const char *suite_string,
+	const uint8_t *key, size_t key_len,
+	uint64_t C, 			/* 0 if no C param in suite */
+	const char *Q,
+	const uint8_t *P, size_t P_len, /* NULL, 0 if no P param in suite */
+	const uint8_t *S, size_t S_len, /* NULL, 0 if no S param in suite */
+	uint64_t T, 			/* 0 if no T param in suite */
+	const char *response,
+	uint32_t counter_window, 	/* 0 if no C param in suite */
+	uint64_t *next_counter,
+	uint32_t timestamp_offset); 	/* 0 if no T param in suite */
 #endif

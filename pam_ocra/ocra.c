@@ -71,7 +71,8 @@ open_db(DB ** db, int flags, const char *path, const char *user_id)
 		if (NULL != path) {
 			asprintf(&p2, "%s/%s", path, user_id);
 			if (NULL == (*db = dbopen(p2, flags, 0, DB_BTREE, NULL)))
-				syslog(LOG_ERR, "dbopen(\"%s\", ...) failed: %s", p2,
+				syslog(LOG_ERR,
+				    "dbopen(\"%s\", ...) failed: %s", p2,
 				    strerror(errno));
 			r = PAM_NO_MODULE_DATA;
 		} else {
@@ -91,12 +92,13 @@ fake_challenge(const char *suite_string, char **questions)
 	ocra_suite ocra;
 
 	if (RFC6287_SUCCESS != (r = rfc6287_parse_suite(&ocra, suite_string))) {
-		syslog(LOG_ERR, "rfc6287_parse_suite() failed for fake_prompt \"%s\": %s",
-		    suite_string, rfc6287_err(r));
+		syslog(LOG_ERR, "rfc6287_parse_suite() failed for "
+		    "fake_prompt \"%s\": %s", suite_string, rfc6287_err(r));
 		return PAM_SERVICE_ERR;
 	}
 	if (RFC6287_SUCCESS != (r = rfc6287_challenge(&ocra, questions))) {
-		syslog(LOG_ERR, "rfc6287_challenge() failed: %s", rfc6287_err(r));
+		syslog(LOG_ERR, "rfc6287_challenge() failed: %s",
+		    rfc6287_err(r));
 		return PAM_SERVICE_ERR;
 	}
 	return PAM_SUCCESS;
@@ -114,7 +116,8 @@ challenge(const char *path, const char *user_id, char **questions)
 	memset(&K, 0, sizeof(K));
 	memset(&V, 0, sizeof(V));
 
-	if (PAM_SUCCESS != (r = open_db(&db, O_EXLOCK | O_RDONLY, path, user_id)))
+	if (PAM_SUCCESS !=
+	    (r = open_db(&db, O_EXLOCK | O_RDONLY, path, user_id)))
 		return r;
 
 	KEY(K, "suite");
@@ -127,11 +130,13 @@ challenge(const char *path, const char *user_id, char **questions)
 	db->close(db);
 
 	if (RFC6287_SUCCESS != r) {
-		syslog(LOG_ERR, "rfc6287_parse_suite() failed: %s", rfc6287_err(r));
+		syslog(LOG_ERR, "rfc6287_parse_suite() failed: %s",
+		    rfc6287_err(r));
 		return PAM_SERVICE_ERR;
 	}
 	if (RFC6287_SUCCESS != (r = rfc6287_challenge(&ocra, questions))) {
-		syslog(LOG_ERR, "rfc6287_challenge() failed: %s", rfc6287_err(r));
+		syslog(LOG_ERR, "rfc6287_challenge() failed: %s",
+		    rfc6287_err(r));
 		return PAM_SERVICE_ERR;
 	}
 	return PAM_SUCCESS;
@@ -175,7 +180,8 @@ verify(const char *path, const char *user_id, const char *questions,
 	memcpy(suite_string, V.data, V.size);
 
 	if (RFC6287_SUCCESS != (r = rfc6287_parse_suite(&ocra, suite_string))) {
-		syslog(LOG_ERR, "rfc6287_parse_suite() failed: %s", rfc6287_err(r));
+		syslog(LOG_ERR, "rfc6287_parse_suite() failed: %s",
+		    rfc6287_err(r));
 		goto out;
 	}
 	KEY(K, "key");
@@ -217,12 +223,14 @@ verify(const char *path, const char *user_id, const char *questions,
 		timestamp_offset = ((int *)(V.data))[0];
 
 		if (0 != rfc6287_timestamp(&ocra, &T)) {
-			syslog(LOG_ERR, "rfc6287_timestamp() failed: %s", rfc6287_err(r));
+			syslog(LOG_ERR, "rfc6287_timestamp() failed: %s",
+			    rfc6287_err(r));
 			goto out;
 		}
 	}
-	r = rfc6287_verify(&ocra, suite_string, key, key_l, C, questions, P, P_l,
-	    NULL, 0, T, response, counter_window, &next_counter, timestamp_offset);
+	r = rfc6287_verify(&ocra, suite_string, key, key_l, C, questions,
+	    P, P_l, NULL, 0, T, response, counter_window, &next_counter,
+	    timestamp_offset);
 	if (RFC6287_SUCCESS == r) {
 		if (ocra.flags & FL_C) {
 			KEY(K, "C");
@@ -238,7 +246,8 @@ verify(const char *path, const char *user_id, const char *questions,
 	} else if (RFC6287_VERIFY_FAILED == r)
 		ret = PAM_AUTH_ERR;
 	else
-		syslog(LOG_ERR, "rfc6287_challenge() failed: %s", rfc6287_err(r));
+		syslog(LOG_ERR, "rfc6287_challenge() failed: %s",
+		    rfc6287_err(r));
 out:
 	if (0 != db->close(db))
 		syslog(LOG_ERR, "db->close() failed: %s", strerror(errno));

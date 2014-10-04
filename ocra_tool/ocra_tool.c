@@ -61,12 +61,14 @@ pin_hash(const ocra_suite * ocra, const char *pin, uint8_t **P, size_t *P_l)
 	    (1 != EVP_DigestUpdate(&ctx, pin, strlen(pin))) ||
 	    (1 != EVP_DigestFinal(&ctx, *P, &s)) ||
 	    (s != *P_l))
-		errx(EX_OSERR, "pin_hash() failed: %s", ERR_error_string(ERR_get_error(), NULL));
+		errx(EX_OSERR, "pin_hash() failed: %s",
+		    ERR_error_string(ERR_get_error(), NULL));
 	EVP_MD_CTX_cleanup(&ctx);
 }
 
 static int
-key_from_hex(const ocra_suite * ocra, const char *key_string, uint8_t **key, size_t *key_l)
+key_from_hex(const ocra_suite * ocra, const char *key_string,
+    uint8_t **key, size_t *key_l)
 {
 	uint32_t i;
 
@@ -102,18 +104,19 @@ cmd_help()
 {
 	const char *pn = getprogname();
 
-	printf(
-	    "%s: create db files used by pam_ocra\n"
+	printf("%s: create db files used by pam_ocra\n"
 	    "Help: %s help\n"
 	    "Info: %s info -f <credentials_file>\n"
-	    "Init: %s init -f <credentials_file> -s <suite_string> -k <key> ... \n"
-	    " ... [-c <counter>] [-p <pin>] [-w <counter_window>] [-t <timestamp_offset>]\n\n",
+	    "Init: %s init -f <credentials_file> -s <suite_string> "
+	    "-k <key> ... \n ... [-c <counter>] [-p <pin>] "
+	    "[-w <counter_window>] [-t <timestamp_offset>]\n\n",
 	    pn, pn, pn, pn);
-	printf(
-	    " <credentials_file> - where the OCRA suite information of a user is stored\n"
+	printf(" <credentials_file> - where the OCRA suite information of a "
+	    "user is stored\n"
 	    "\tpam_ocra looks in $HOME/.ocra and $OCRA_DB_DIR/$USER\n"
 	    " <suite_string> - the RFC6287 OCRA Suite\n"
-	    " <key> - hex encoded key (size depends on CryptoFunction of in OCRA suite\n"
+	    " <key> - hex encoded key (size depends on CryptoFunction of in "
+	    "OCRA suite\n"
 	    " <pin> - if the suite requires a pin/password parameter\n"
 	    " <counter> - initial counter value (if required by suite)\n"
 	    " <counter_window> - optional counter search window\n"
@@ -150,7 +153,8 @@ cmd_info(int argc, char **argv)
 	memset(&K, 0, sizeof(K));
 	memset(&V, 0, sizeof(V));
 
-	if (NULL == (db = dbopen(fname, O_EXLOCK | O_RDONLY, 0600, DB_BTREE, NULL)))
+	if (NULL ==
+	    (db = dbopen(fname, O_EXLOCK | O_RDONLY, 0600, DB_BTREE, NULL)))
 		err(EX_OSERR, "dbopen() failed");
 
 
@@ -161,7 +165,8 @@ cmd_info(int argc, char **argv)
 	printf("suite:\t\t%s\n", (char *)(V.data));
 
 	if (RFC6287_SUCCESS != (ret = rfc6287_parse_suite(&ocra, V.data)))
-		errx(EX_SOFTWARE, "rfc6287_parse_suite() failed: %s", rfc6287_err(ret));
+		errx(EX_SOFTWARE, "rfc6287_parse_suite() failed: %s",
+		    rfc6287_err(ret));
 
 	KEY(K, "key");
 	if (0 != (ret = db->get(db, &K, &V, 0)))
@@ -224,18 +229,22 @@ test_input(const ocra_suite * ocra, const char *suite_string,
 	char *response;
 
 	if (RFC6287_SUCCESS != (r = rfc6287_challenge(ocra, &questions)))
-		errx(EX_SOFTWARE, "rfc6287_challenge() failed: %s", rfc6287_err(r));
+		errx(EX_SOFTWARE, "rfc6287_challenge() failed: %s",
+		    rfc6287_err(r));
 
 	if (RFC6287_SUCCESS != (r = rfc6287_timestamp(ocra, &T)))
-		errx(EX_SOFTWARE, "rfc6287_timestamp() failedi: %s", rfc6287_err(r));
+		errx(EX_SOFTWARE, "rfc6287_timestamp() failedi: %s",
+		    rfc6287_err(r));
 
-	if (RFC6287_SUCCESS != (r = rfc6287_ocra(ocra, suite_string, key, key_l, C, questions,
-	    P, P_l, NULL, 0, T, &response)))
+	if (RFC6287_SUCCESS != (r = rfc6287_ocra(ocra, suite_string,
+		    key, key_l, C, questions, P, P_l, NULL, 0, T, &response)))
 		errx(EX_SOFTWARE, "rfc6287_ocra() failed: %s", rfc6287_err(r));
 
-	if (RFC6287_SUCCESS != (r = rfc6287_verify(ocra, suite_string, key, key_l, C, questions, P,
-	    P_l, NULL, 0, T, response, counter_window, &next_counter, timestamp_offset)))
-		errx(EX_SOFTWARE, "rfc6287_verify() failed: %s", rfc6287_err(r));
+	if (RFC6287_SUCCESS != (r = rfc6287_verify(ocra, suite_string,
+		    key, key_l, C, questions, P, P_l, NULL, 0, T, response,
+		    counter_window, &next_counter, timestamp_offset)))
+		errx(EX_SOFTWARE, "rfc6287_verify() failed: %s",
+		    rfc6287_err(r));
 
 	free(response);
 	free(questions);
@@ -357,7 +366,8 @@ cmd_init(int argc, char **argv)
 		usage();
 
 	if (RFC6287_SUCCESS != (r = rfc6287_parse_suite(&ocra, suite_string)))
-		err(EX_CONFIG, "rfc6287_parse_suite() failed: %s", rfc6287_err(r));
+		err(EX_CONFIG, "rfc6287_parse_suite() failed: %s",
+		    rfc6287_err(r));
 	if (ocra.flags & FL_C) {
 		if (NULL == counter_string)
 			errx(EX_CONFIG, "suite requires counter parameter "
@@ -365,31 +375,34 @@ cmd_init(int argc, char **argv)
 		if (-1 == (C = parse_num(counter_string)))
 			errx(EX_CONFIG, "invalid counter value");
 		if (NULL != counter_window_string)
-			if (-1 == (counter_window = parse_num(counter_window_string)))
+			if (-1 ==
+			    (counter_window = parse_num(counter_window_string)))
 				errx(EX_CONFIG, "invalud counter window value");
 	} else {
 		if (NULL != counter_string)
-			errx(EX_CONFIG, "suite does not require counter parameter "
-			    "(-c <counter> must not be set)");
+			errx(EX_CONFIG, "suite does not require counter "
+			    "parameter (-c <counter> must not be set)");
 		if (NULL != counter_window_string)
-			errx(EX_CONFIG, "suite does not require counter parameter "
-			    " (-w <counter_window> must not be set)");
+			errx(EX_CONFIG, "suite does not require counter "
+			    "parameter  (-w <counter_window> must not be set)");
 	}
 	if (ocra.flags & FL_S)
 		errx(EX_CONFIG, "suite requires session parameter (S) which"
 		    " is not supported by pam_ocra");
 	if (ocra.flags & FL_T) {
-		if (-1 == (timestamp_offset = parse_num(timestamp_offset_string)))
+		if (-1 ==
+		    (timestamp_offset = parse_num(timestamp_offset_string)))
 			errx(EX_CONFIG, "invalid timestamp offset value");
 	} else if (NULL != timestamp_offset_string)
 		errx(EX_CONFIG, "suite does nor require timestamp parameter "
 		    " (-t <timestamp_offset> must not be set)");
 	if (0 == ocra.hotp_trunc)
-		errx(EX_CONFIG, "suite specifies no (0) truncation in CryptoFunction."
-		    " This is not supported by pam_ocra");
+		errx(EX_CONFIG, "suite specifies no (0) truncation in "
+		    "CryptoFunction. This is not supported by pam_ocra");
 	if (ocra.flags & FL_P) {
 		if (NULL == pin_string)
-			errx(EX_CONFIG, "suite requires pin parameter (-p <pin> missing)");
+			errx(EX_CONFIG, "suite requires pin parameter "
+			    "(-p <pin> missing)");
 		pin_hash(&ocra, pin_string, &P, &P_l);
 	} else if (NULL != pin_string)
 		errx(EX_CONFIG, "suite does not require pin parameter"

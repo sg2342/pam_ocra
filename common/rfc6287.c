@@ -323,7 +323,7 @@ truncate_md(const uint8_t *md, size_t md_l, int len, char **resp)
 	if (NULL == (*resp = (char *)malloc(len + 1)))
 		return RFC6287_ERR_POSIX;
 
-	snprintf(*resp, len + 1, "%.*"PRIu64"u", len, v);
+	snprintf(*resp, len + 1, "%.*" PRIu64 "u", len, v);
 	return 0;
 }
 
@@ -475,11 +475,15 @@ rfc6287_ocra(const ocra_suite * ocra, const char *suite_string,
 	HMAC_CTX_init(&ctx);
 	if ((1 != HMAC_Init(&ctx, key, key_l, evp_md(ocra->hotp_alg))) ||
 	    (1 != HMAC_Update(&ctx, (unsigned char *)suite_string, suite_l)) ||
-	    ((flags & FL_C) && (1 != HMAC_Update(&ctx, (unsigned char *)CBE, 8))) ||
+	    ((flags & FL_C) &&
+		(1 != HMAC_Update(&ctx, (unsigned char *)CBE, 8))) ||
 	    (1 != HMAC_Update(&ctx, (unsigned char *)qbuf, 128)) ||
-	    ((flags & FL_P) && (1 != HMAC_Update(&ctx, (unsigned char *)P, P_l))) ||
-	    ((flags & FL_S) && (1 != HMAC_Update(&ctx, (unsigned char *)S, S_l))) ||
-	    ((flags & FL_T) && (1 != HMAC_Update(&ctx, (unsigned char *)TBE, 8))) ||
+	    ((flags & FL_P) &&
+		(1 != HMAC_Update(&ctx, (unsigned char *)P, P_l))) ||
+	    ((flags & FL_S) &&
+		(1 != HMAC_Update(&ctx, (unsigned char *)S, S_l))) ||
+	    ((flags & FL_T) &&
+		(1 != HMAC_Update(&ctx, (unsigned char *)TBE, 8))) ||
 	    (NULL == (md = (uint8_t *)malloc(mdlen(ocra->hotp_alg)))) ||
 	    (1 != HMAC_Final(&ctx, md, &md_l)) ||
 	    (md_l != mdlen(ocra->hotp_alg))) {
@@ -500,9 +504,10 @@ rfc6287_ocra(const ocra_suite * ocra, const char *suite_string,
 
 int
 rfc6287_verify(const ocra_suite * ocra, const char *suite_string,
-    const uint8_t *key, size_t key_l, uint64_t C, const char *Q, const uint8_t *P,
-    size_t P_l, const uint8_t *S, size_t S_l, uint64_t T, const char *resp,
-    uint32_t counter_window, uint64_t *next_C, uint32_t timestamp_offset)
+    const uint8_t *key, size_t key_l, uint64_t C, const char *Q,
+    const uint8_t *P, size_t P_l, const uint8_t *S, size_t S_l, uint64_t T,
+    const char *resp, uint32_t counter_window, uint64_t *next_C,
+    uint32_t timestamp_offset)
 {
 	int ret;
 	uint8_t *buf;
@@ -553,14 +558,15 @@ rfc6287_verify(const ocra_suite * ocra, const char *suite_string,
 
 
 	if (flags & FL_T) {
-		uint64_t TT;
+		uint64_t TT = T - timestamp_offset;
 
-		for (TT = T - timestamp_offset; T + timestamp_offset >= TT; TT++) {
+		for (; T + timestamp_offset >= TT; TT++) {
 			st64be(buf + T_off, TT);
 			if (flags & FL_C) {
 				if (RFC6287_VERIFY_FAILED !=
-				    (ret = verify_c(ocra, C_off, key, key_l, C, buf, buf_l,
-				    resp, counter_window, next_C)))
+				    (ret = verify_c(ocra, C_off, key, key_l, C,
+					buf, buf_l, resp, counter_window,
+					next_C)))
 					goto out;
 			} else if (RFC6287_VERIFY_FAILED !=
 			    (ret = verify(ocra, key, key_l, buf, buf_l, resp)))
