@@ -34,8 +34,6 @@
 .Nd create and view OCRA credential files
 .Sh SYNOPSIS
 .Nm
-.Cm help
-.Nm
 .Cm info
 .Fl f
 .Ar credential_file
@@ -48,7 +46,7 @@
 .Fl k
 .Ar key
 .Op Fl c Ar counter
-.Op Fl p Ar pin
+.Op Fl p Ar pin | Fl P Ar pinhash
 .Op Fl w Ar counter_window
 .Op Fl t Ar timestamp_offset
 .Sh DESCRIPTION
@@ -56,9 +54,7 @@ The
 .Nm
 utility is used to initialize and view OCRA credential files used by the
 .Xr pam_ocra 8 authentication service module for PAM.
-.Bl -tag -width ".Cm help"
-.It Cm help
-List available commands and arguments.
+.Bl -tag -width ".Cm info"
 .It Cm info
 Show content of OCRA credential file.
 .Bl -tag -width ".FL f"
@@ -73,7 +69,7 @@ the OCRA credential file.
 .It Fl s Ar suite_string
 OCRA suite string.
 .It Fl k Ar key
-specified as hexadecimal string (no leading '0x', not separated by ':').
+specified as hexadecimal string.
 .It Fl c Ar counter
 If the
 .Ar suite_string
@@ -82,12 +78,14 @@ requires a counter parameter,
 is the initial counter value. If
 .Ar counter
 begins with '0x' it will be interpreted as hexadecimal number.
-.It Fl p Ar pin
+.It Fl p Ar pin | Fl P Ar pinhash
 If the
 .Ar suite_string
-requires a pin-hash parameter, the digest of
+requires a pin-hash parameter, it is either set as hexadecimal string
+.Ar pinhash
+or calculated from
 .Ar pin
-is calculated using the pin-hash algorithm specified in
+using the pin-hash algorithm in
 .Ar suite_string .
 .It Fl w Ar counter_window
 If the
@@ -118,19 +116,19 @@ $ ocra_tool init -f ~/.ocra -s OCRA-1:HOTP-SHA1-6:C-QN08-PSHA1 \\
 .sp 0
         -k 00112233445566778899aabbccddeeff00112233 \\
 .sp 0
-        c 10 -p 1234 -w 50
+        -c 10 -p 1234 -w 50
 .sp 1
 $ ocra_tool info -f ~/.ocra
 .sp 0
 suite:          OCRA-1:HOTP-SHA1-6:C-QN08-PSHA1
 .sp 0
-key:            00112233445566778899aabbccddeeff00112233
+key:            0x00112233445566778899aabbccddeeff00112233
 .sp 0
-counter:        10
+counter:        0x000000000000000a
 .sp 0
 counter_window: 50
 .sp 0
-pin_hash:       7110eda4d09e062aa5e4a390b0a572ac0d2c0220
+pin_hash:       0x7110eda4d09e062aa5e4a390b0a572ac0d2c0220
 .Lp
 .Sh FILES
 .Bl -tag -width Ds -compact
