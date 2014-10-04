@@ -216,17 +216,21 @@ cmd_info(int argc, char **argv)
 	printf("\n");
 
 	if (ocra.flags & FL_C) {
+		uint64_t C;
+		int CW;
 		KEY(K, "C");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
 			    (1 == ret) ? "key not in db" : strerror(errno));
-		printf("counter:\t%" PRIu64 "\n", ((uint64_t *)(V.data))[0]);
+		memcpy(&C, V.data, sizeof(C));
+		printf("counter:\t%" PRIu64 "\n", C);
 
 		KEY(K, "counter_window");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
 			    (1 == ret) ? "key not in db" : strerror(errno));
-		printf("counter_window: %d\n", ((int *)(V.data))[0]);
+		memcpy(&CW, V.data, sizeof(CW));
+		printf("counter_window: %d\n", CW);
 	}
 	if (ocra.flags & FL_P) {
 		KEY(K, "P");
@@ -242,11 +246,13 @@ cmd_info(int argc, char **argv)
 		printf("\n");
 	}
 	if (ocra.flags & FL_T) {
+		int TO;
 		KEY(K, "timestamp_offset");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
 			    (1 == ret) ? "key not in db" : strerror(errno));
-		printf("timestamp_offset: %d\n", ((int *)(V.data))[0]);
+		memcpy(&TO, V.data, sizeof(TO));
+		printf("timestamp_offset: %d\n", TO);
 	}
 	if (0 != (db->close(db)))
 		errx(EX_OSERR, "db->close() failed: %s", strerror(errno));

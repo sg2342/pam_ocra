@@ -200,12 +200,12 @@ verify(const char *path, const char *user_id, const char *questions,
 		KEY(K, "C");
 		if (0 != db_get(db, &K, &V))
 			goto out;
-		C = ((uint64_t *)(V.data))[0];
+		memcpy(&C, V.data, sizeof(C));
 
 		KEY(K, "counter_window");
 		if (0 != db_get(db, &K, &V))
 			goto out;
-		counter_window = ((int *)(V.data))[0];
+		memcpy(&counter_window, V.data, sizeof(counter_window));
 	}
 	if (ocra.flags & FL_P) {
 		KEY(K, "P");
@@ -222,7 +222,7 @@ verify(const char *path, const char *user_id, const char *questions,
 		KEY(K, "timestamp_offset");
 		if (0 != db_get(db, &K, &V))
 			goto out;
-		timestamp_offset = ((int *)(V.data))[0];
+		memcpy(&timestamp_offset, V.data, sizeof(timestamp_offset));
 
 		if (0 != rfc6287_timestamp(&ocra, &T)) {
 			syslog(LOG_ERR, "rfc6287_timestamp() failed: %s",
@@ -236,7 +236,7 @@ verify(const char *path, const char *user_id, const char *questions,
 	if (RFC6287_SUCCESS == r) {
 		if (ocra.flags & FL_C) {
 			KEY(K, "C");
-			V.data = (void *)&next_counter;
+			V.data = &next_counter;
 			V.size = sizeof(uint64_t);
 			if (0 != db->put(db, &K, &V, 0)) {
 				syslog(LOG_ERR, "db->put() failed for %s: %s",
