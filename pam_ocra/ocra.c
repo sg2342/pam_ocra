@@ -52,7 +52,8 @@ db_get(DB * db, DBT * K, DBT * V)
 
 	if (0 != (r = db->get(db, K, V, 0)))
 		syslog(LOG_ERR, "db->get() failed for %s :%s",
-		    K->data, (1 == r) ? "key not in db" : (strerror(errno)));
+		    (const char*)(K->data),
+		    (1 == r) ? "key not in db" : (strerror(errno)));
 	return r;
 };
 
@@ -238,7 +239,8 @@ verify(const char *path, const char *user_id, const char *questions,
 			V.size = sizeof(uint64_t);
 			if (0 != db->put(db, &K, &V, 0)) {
 				syslog(LOG_ERR, "db->put() failed for %s: %s",
-				    K.data, strerror(errno));
+				    (const char*)(K.data),
+				    strerror(errno));
 				goto out;
 			}
 		}

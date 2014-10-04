@@ -177,7 +177,7 @@ cmd_info(int argc, char **argv)
 
 	printf("key:\t\t");
 	for (i = 0; V.size > i; i++)
-		printf("%0.02x", ((uint8_t *)(V.data))[i]);
+		printf("%02x", ((uint8_t *)(V.data))[i]);
 	printf("\n");
 
 	if (ocra.flags & FL_C) {
@@ -203,7 +203,7 @@ cmd_info(int argc, char **argv)
 			errx(EX_SOFTWARE, "pin hash size does not match suite!");
 		printf("pin_hash:\t");
 		for (i = 0; V.size > i; i++)
-			printf("%0.02x", ((uint8_t *)(V.data))[i]);
+			printf("%02x", ((uint8_t *)(V.data))[i]);
 		printf("\n");
 	}
 	if (ocra.flags & FL_T) {
