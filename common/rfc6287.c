@@ -290,7 +290,7 @@ err:
 static int
 format_questions(const ocra_suite * ocra, uint8_t *out, const char *Q)
 {
-	int l;
+	int l=0;
 
 	switch (ocra->Q_fmt) {
 	case a:
@@ -381,7 +381,8 @@ verify(const ocra_suite * ocra, const uint8_t *key, size_t key_l,
 			return ret;
 	} else
 		tmp = (char *)md;
-	if (0 != memcmp(resp, tmp, (ocra->hotp_trunc) ? ocra->hotp_trunc : md_l))
+	if (0 != memcmp(resp, tmp,
+		(ocra->hotp_trunc) ? (unsigned int)ocra->hotp_trunc : md_l))
 		ret = RFC6287_VERIFY_FAILED;
 	else
 		ret = RFC6287_SUCCESS;
