@@ -44,7 +44,11 @@
 
 #include "rfc6287.h"
 
-#define KEY(k, s) k.data = (void*)s; k.size = sizeof(s);
+#define KEY(k, s) memcpy(k.data = K_buf, s, k.size = sizeof(s));
+#define VALUE(v, s, z) memcpy(v.data = V_buf, s, v.size = z);
+
+static char K_buf[32];
+static char V_buf[254];
 
 static void
 pin_hash(const ocra_suite * ocra, const char *pin, uint8_t **P, size_t *P_l)
@@ -297,38 +301,32 @@ write_db(const char *fname, const char *suite_string,
 		err(EX_OSERR, "dbopen() failed");
 
 	KEY(K, "suite");
-	V.data = (void *)suite_string;
-	V.size = strlen(suite_string) + 1;
+	VALUE(V, suite_string, strlen(suite_string) + 1);
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		err(EX_OSERR, "db->put() failed");
 
 	KEY(K, "key");
-	V.data = (void *)key;
-	V.size = key_l;
+	VALUE(V, key, key_l);
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		err(EX_OSERR, "db->put() failed");
 
 	KEY(K, "C");
-	V.data = &C;
-	V.size = sizeof(C);
+	VALUE(V, &C, sizeof(C));
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		err(EX_OSERR, "db->put() failed");
 
 	KEY(K, "P");
-	V.data = (void *)P;
-	V.size = P_l;
+	VALUE(V, P, P_l);
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		err(EX_OSERR, "db->put() failed");
 
 	KEY(K, "counter_window");
-	V.data = &counter_window;
-	V.size = sizeof(counter_window);
+	VALUE(V, &counter_window, sizeof(counter_window));
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		err(EX_OSERR, "db->put() failed");
 
 	KEY(K, "timestamp_offset");
-	V.data = &timestamp_offset;
-	V.size = sizeof(timestamp_offset);
+	VALUE(V, &timestamp_offset, sizeof(timestamp_offset));
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		err(EX_OSERR, "db->put() failed");
 

@@ -41,9 +41,10 @@
 #include "rfc6287.h"
 #include "ocra.h"
 
-#define KEY(k, s) k.data = (void*)s; k.size = sizeof(s);
 
+#define KEY(k, s) memcpy(k.data = K_buf, s, k.size = sizeof(s));
 
+static char K_buf[32];
 
 static int
 db_get(DB * db, DBT * K, DBT * V)
