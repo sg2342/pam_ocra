@@ -402,7 +402,7 @@ verify_c(const ocra_suite * ocra, off_t C_off, const uint8_t *key, size_t key_l,
 		if (RFC6287_VERIFY_FAILED !=
 		    (ret = verify(ocra, key, key_l, buf, buf_l, resp)))
 			break;
-	} while (*next_C != (C + counter_window));
+	} while (*next_C <= (C + counter_window));
 	return ret;
 }
 
@@ -555,7 +555,7 @@ rfc6287_verify(const ocra_suite * ocra, const char *suite_string,
 	if (flags & FL_T) {
 		uint64_t TT;
 
-		for (TT = T - timestamp_offset; T + timestamp_offset != TT; TT++) {
+		for (TT = T - timestamp_offset; T + timestamp_offset >= TT; TT++) {
 			st64be(buf + T_off, TT);
 			if (flags & FL_C) {
 				if (RFC6287_VERIFY_FAILED !=
