@@ -87,7 +87,7 @@ key_from_hex(const ocra_suite * ocra, const char *key_string,
 }
 
 static void
-usage()
+usage(void)
 {
 	const char *pn = getprogname();
 
@@ -100,7 +100,7 @@ usage()
 }
 
 static void
-cmd_help()
+cmd_help(void)
 {
 	const char *pn = getprogname();
 
