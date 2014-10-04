@@ -324,7 +324,7 @@ truncate_md(const uint8_t *md, size_t md_l, int len, char **resp)
 	if (NULL == (*resp = (char *)malloc(len + 1)))
 		return RFC6287_ERR_POSIX;
 
-	snprintf(*resp, len + 1, "%.*" PRIu64 "u", len, v);
+	snprintf(*resp, len + 1, "%.*" PRIu64, len, v);
 	return 0;
 }
 

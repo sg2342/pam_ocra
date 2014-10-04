@@ -160,7 +160,7 @@ C1_2(void)
 			errx(EX_SOFTWARE, "in C1_2: rfc6287_ocra() failed: %d",
 			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (C=%" PRIu64 "u, Q=%s, R=%s)\n",
+			printf(" fail (%d)\t%s (C=%" PRIu64 ", Q=%s, R=%s)\n",
 			    ++failed, suite, C, Q, R);
 		free(RR);
 	}
@@ -234,7 +234,7 @@ C1_4(void)
 			errx(EX_SOFTWARE, "in C1_4: rfc6287_ocra() failed: %d",
 			    ret);
 		if (0 != strcmp(R, RR))
-			printf(" fail (%d)\t%s (C=%" PRIu64 "u Q=%s, R=%s)\n",
+			printf(" fail (%d)\t%s (C=%" PRIu64 ", Q=%s, R=%s)\n",
 			    ++failed, suite, C, Q, R);
 		free(RR);
 	}
