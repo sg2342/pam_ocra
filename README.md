@@ -34,6 +34,11 @@ and sshd is configured to use PAM, "foobar" can log in using an OCRA token.
 Changelog
 ---------
 
+- 1.2:
+
+  * Constify two local variables to avoid -Wcast-qual warnings:
+    https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=198113
+
 - 1.1:
 
   * change ocra_tool(8) command line interface:

@@ -46,7 +46,7 @@ get_response(pam_handle_t *pamh, char *prompt, char **response)
 	int ret;
 	struct pam_message msg;
 	const struct pam_message *msgp = &msg;
-	struct pam_conv *conv = NULL;
+	const struct pam_conv *conv = NULL;
 	struct pam_response *presponse = NULL;
 
 	pam_get_item(pamh, PAM_CONV, (const void **)&conv);
@@ -75,7 +75,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	const char *dir = NULL;
 	const char *fake_suite = NULL;
 	char *questions;
-	char *user;
+	const char *user;
 	char *response = NULL;
 	char fmt[512];
 
