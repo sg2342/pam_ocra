@@ -65,7 +65,33 @@ provides the user with an OCRA challenge and verifies the response.
 The following options may be passed to the authentication module:
 .Bl -tag -width ".Cm disallow"
 .It Cm dir Ns = Ns Ar directory
-directory to search for OCRA credentials.
+Specifies the additional directory to search for OCRA credentials.
+.It Cm nodata Ns = Ns Ar action
+Determines how the module handles the situation where there is no OCRA data
+file associated with the user.  Use this option when some accounts use OCRA
+authentication but other accounts do not.  The
+.Ar action
+value must be one of the following:
+.Bl -tag -width ".So \  Sc (space)"
+.It Sq Cm fail
+In the absence of this option, or
+if the
+.Ar action
+is set to
+.Sq Cm fail
+.Ns , an error message will be logged via
+.Fn syslog
+and PAM_AUTHINFO_UNAVAIL will be returned.  (But see
+.Cm fake_prompt
+.Ns , below.)
+.It Sq Cm succeed
+PAM_SUCCESS will be returned.
+.It Sq Cm ignore
+PAM_IGNORE will be returned.
+.El
+.Pp
+Which option to use will depend on the
+control flag used in PAM configuration file.
 .It Cm fake_prompt Ns = Ns Ar suite_string
 Use
 .Ar suite_string
@@ -73,12 +99,126 @@ to generate fake challenges for users who do not have OCRA credentials.
 Note that if this option is not set, no fake challenges will be generated
 which can leak information to a hypothetical attacker about who uses OCRA
 and who does not.
+.Pp
+If this option is specified, then the handling of the
+.Cm nodata
+option changes somewhat.  If the
+.Cm nodata
+option is absent, or the
+.Ar action
+is set to
+.Sq Cm fail
+.Ns , then the module will return PAM_AUTH_ERR instead of PAM_AUTHINFO_UNAVAIL.
+.It Cm cmsg Ns = Ns Ar challenge_prompt Cm rmsg Ns = Ns Ar response_prompt
+Change the challange and/or the response prompts.  The
+.Cm cmsg
+option changes the challenge prompt, and the
+.Cm rmsg
+option changes the response prompt.  If the
+.Cm cmsg
+prompt is specified, a newline will be appended to it.  There will be no
+newline appended to the
+.Cm rmsg
+prompt.  If spaces are included for either prompt, the prompt must be in
+placed in double quotes.  For either prompt, the following formatting
+directives may be used:
+.Bl -tag -width ".So \  Sc (space)"
+.It Sq Cm %c
+Insert the challenge question.
+.It Sq Cm %u
+Insert a UTC timestamp in
+.Cm ISO-8601
+format. This information can be
+useful when the OCRA suite string contains a time specification but the
+clock on the system is unreliable.  Many SSH clients don't give visibility
+to any system output prior to login, so this may be the only way to indicate
+that a time discrepancy exists.  Note that the timezone abbreviation is
+appended to the timestamp for readability purposes.  This timezone abbreviation
+should be stripped off before parsing the timestamp.
+.It Sq Cm %l
+Insert a local-time timestamp in
+.Cm ISO-8601
+format.  (Which may still be UTC, depending on how the system is configured.)
+In addition to the date and time, the timezone offset is appended to the local
+timestamp.
+Like its UTC counterpart, a readable timezone abbreviation is appended to the
+timestamp.
+.It Sq Cm %%
+Insert a literal % character.
+.El
+.Pp
+The default challenge prompt is "OCRA Challenge: %c" and the default response
+prompt is "OCRA Response: "
 .El
 .Sh FILES
 .Bl -tag -width Ds -compact
 .It Pa ~/.ocra
 .El
 OCRA credential file
+.Sh EXAMPLES
+Note that in the following examples, the pam_ocra.so entry in the PAM
+configuration file is shown on multiple lines for readability purposes.  In the
+actual configuration file, the module and its options must be on one line.
+.Pp
+.Pp
+A PAM config file with the following entries:
+.Pp
+.Bd -literal
+auth require pam_unix.so no_warn null_ok
+auth require /usr/local/lib/pam_ocra.so \e
+                 nodata=succeed fake_prompt=OCRA-1:HOTP-SHA1-6:QN06-PSHA1
+.Ed
+.Pp
+Would ask for both a normal login password and an OCRA response from all users.
+If there is OCRA data associated with the user, then both authentication
+methods must succeed.  A non-OCRA user only has to successfully enter the
+normal login password.
+.Pp
+.Pp
+A PAM config file with the following entries:
+.Pp
+.Bd -literal
+auth requisite pam_unix.so no_warn null_ok
+auth require /usr/local/lib/pam_ocra.so nodata=fail
+.Ed
+.Pp
+Would ask for a normal login password from all users, but only ask for an
+OCRA response if the normal login succeeded
+.Em and
+there was OCRA data associated with the user.  For users without OCRA
+data, the login would immediately fail.
+.Pp
+.Pp
+For both of the above examples, the prompts would appear similar to the
+following:
+.Bd -literal
+OCRA Challenge: 123456
+OCRA Response:
+.Ed
+.Pp
+.Pp
+If the options included the following prompt changes:
+.Bd -literal
+cmsg="%u" rmsg="OTP Response to %c: "
+.Ed
+.Pp
+Then the prompts would look similar to:
+.Bd -literal
+2017-07-20T21:26:43Z UTC
+OTP Response to 123456:
+.Ed
+.Pp
+.Pp
+Similarly if the options included the following prompt changes:
+.Bd -literal
+cmsg="%l - Challenge: %c" rmsg="Response: "
+.Ed
+.Pp
+Then the prompts would look similar to:
+.Bd -literal
+2017-07-20T16:26:43-0500 CDT - Challenge: 123456
+Response:
+.Ed
 .Sh SEE ALSO
 .Xr pam.conf 5 ,
 .Xr pam 8 ,

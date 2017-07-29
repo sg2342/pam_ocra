@@ -53,17 +53,19 @@ db_get(DB * db, DBT * K, DBT * V)
 
 	if (0 != (r = db->get(db, K, V, 0)))
 		syslog(LOG_ERR, "db->get() failed for %s :%s",
-		    (const char*)(K->data),
+		    (const char *)(K->data),
 		    (1 == r) ? "key not in db" : (strerror(errno)));
 	return r;
 };
 
 static int
-open_db(DB ** db, int flags, const char *path, const char *user_id)
+open_db(DB ** db, int flags, const char *path, const char *user_id,
+    const char *nodata, const char *fake_suite)
 {
 	int r = PAM_SUCCESS;
 	struct passwd *pwd = NULL;
 	char *p1, *p2;
+	char *ep = NULL;
 
 	if (NULL == (pwd = getpwnam(user_id)))
 		return PAM_USER_UNKNOWN;
@@ -72,22 +74,33 @@ open_db(DB ** db, int flags, const char *path, const char *user_id)
 	if (NULL == (*db = dbopen(p1, flags, 0, DB_BTREE, NULL))) {
 		if (NULL != path) {
 			asprintf(&p2, "%s/%s", path, user_id);
-			if (NULL == (*db = dbopen(p2, flags, 0, DB_BTREE, NULL)))
-				syslog(LOG_ERR,
-				    "dbopen(\"%s\", ...) failed: %s", p2,
-				    strerror(errno));
-			r = PAM_NO_MODULE_DATA;
+			if (NULL == (*db = dbopen(p2, flags, 0, DB_BTREE, NULL))) {
+				ep = p2;
+			}
 		} else {
-			syslog(LOG_ERR, "dbopen(\"%s\", ...) failed: %s", p1,
-			    strerror(errno));
+			ep = p1;
+		}
+	}
+	/* Handle file open errors */
+	if (NULL != ep) {
+		if (NULL != fake_suite) {
+			/* Indicate that a fake challenge must be generated */
 			r = PAM_NO_MODULE_DATA;
+		} else if (NULL == nodata || strcmp(nodata, "fail") == 0) {
+			/* We know we want to fail, so log an error. */
+			syslog(LOG_ERR, "dbopen(\"%s\", ...) failed: %s", ep,
+			    strerror(errno));
+			r = PAM_AUTHINFO_UNAVAIL;
+		} else {
+			/* We will be changing the return code later */
+			r = PAM_AUTHINFO_UNAVAIL;
 		}
 	}
 	return r;
 }
 
 
-int
+static int
 fake_challenge(const char *suite_string, char **questions)
 {
 	int r;
@@ -103,11 +116,13 @@ fake_challenge(const char *suite_string, char **questions)
 		    rfc6287_err(r));
 		return PAM_SERVICE_ERR;
 	}
-	return PAM_SUCCESS;
+	/* Indicate that a fake challenge was returned */
+	return PAM_NO_MODULE_DATA;
 }
 
 int
-challenge(const char *path, const char *user_id, char **questions)
+challenge(const char *path, const char *user_id, char **questions,
+    const char *nodata, const char *fake_suite)
 {
 	int r;
 	DB *db = NULL;
@@ -119,9 +134,12 @@ challenge(const char *path, const char *user_id, char **questions)
 	memset(&V, 0, sizeof(V));
 
 	if (PAM_SUCCESS !=
-	    (r = open_db(&db, O_EXLOCK | O_RDONLY, path, user_id)))
+	    (r = open_db(&db, O_EXLOCK | O_RDONLY, path,
+	    user_id, nodata, fake_suite))) {
+		if (PAM_NO_MODULE_DATA == r)
+			r = fake_challenge(fake_suite, questions);
 		return r;
-
+	}
 	KEY(K, "suite");
 	if (0 != db_get(db, &K, &V)) {
 		db->close(db);
@@ -168,7 +186,11 @@ verify(const char *path, const char *user_id, const char *questions,
 	memset(&K, 0, sizeof(K));
 	memset(&V, 0, sizeof(V));
 
-	r = open_db(&db, O_EXLOCK | O_RDWR, path, user_id);
+	/*
+	 * This function should only be called if there was valid OCRA data for
+	 * the user.  Fail out if it doesn't exist.
+	 */
+	r = open_db(&db, O_EXLOCK | O_RDWR, path, user_id, NULL, NULL);
 	if (PAM_SUCCESS != r)
 		return r;
 
@@ -240,7 +262,7 @@ verify(const char *path, const char *user_id, const char *questions,
 			V.size = sizeof(uint64_t);
 			if (0 != db->put(db, &K, &V, 0)) {
 				syslog(LOG_ERR, "db->put() failed for %s: %s",
-				    (const char*)(K.data),
+				    (const char *)(K.data),
 				    strerror(errno));
 				goto out;
 			}
