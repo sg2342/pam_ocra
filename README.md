@@ -34,6 +34,14 @@ and sshd is configured to use PAM, "foobar" can log in using an OCRA token.
 Changelog
 ---------
 
+- 1.3:
+
+  * fix pam_ocra "dir=" option
+
+  * introduce pam_ocra "rmsg=", "cmsg=" and "nodata=" options
+
+  contributed by Richard Nichols <rdn757@gmail.com>
+
 - 1.2:
 
   * Constify two local variables to avoid -Wcast-qual warnings:
