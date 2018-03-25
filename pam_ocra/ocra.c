@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014 Stefan Grundmann
+ * Copyright (c) 2014, 2018 Stefan Grundmann
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -168,6 +168,7 @@ verify(const char *path, const char *user_id, const char *questions,
 {
 	int ret = PAM_SERVICE_ERR;
 	int r;
+	int kill_pin_used = 0;
 	DB *db = NULL;
 	DBT K, V;
 
@@ -175,6 +176,8 @@ verify(const char *path, const char *user_id, const char *questions,
 	uint8_t *key = NULL;
 	size_t key_l = 0;
 	uint64_t C = 0;
+	uint8_t *KP = NULL;
+	size_t KP_l = 0;
 	uint8_t *P = NULL;
 	size_t P_l = 0;
 	uint64_t T = 0;
@@ -239,6 +242,24 @@ verify(const char *path, const char *user_id, const char *questions,
 		}
 		memcpy(P, V.data, V.size);
 		P_l = V.size;
+
+		KEY(K, "kill_pin_used");
+		if (0 == (r = db_get(db, &K, &V))) {
+			memcpy(&kill_pin_used, V.data, sizeof(kill_pin_used));
+		} else if (r != 1)
+			goto out;
+
+		KEY(K, "kill_pin");
+		if (0 == (r = db_get(db, &K, &V))) {
+			if (NULL == (KP = (uint8_t *)malloc(V.size))) {
+				syslog(LOG_ERR, "malloc() failed: %s",
+				    strerror(errno));
+				goto out;
+			}
+			memcpy(KP, V.data, V.size);
+			KP_l = V.size;
+		} else if (r != 1)
+			goto out;
 	}
 	if (ocra.flags & FL_T) {
 		KEY(K, "timestamp_offset");
@@ -252,10 +273,29 @@ verify(const char *path, const char *user_id, const char *questions,
 			goto out;
 		}
 	}
+	if (KP != NULL) {
+		r = rfc6287_verify(&ocra, suite_string, key, key_l, C, questions,
+		    KP, KP_l, NULL, 0, T, response, counter_window, &next_counter,
+		    timestamp_offset);
+		if (!kill_pin_used && RFC6287_SUCCESS == r) {
+			kill_pin_used = 1;
+			KEY(K, "kill_pin_used");
+			V.data = &kill_pin_used;
+			V.size = sizeof(kill_pin_used);
+			if (0 != db->put(db, &K, &V, 0)) {
+				syslog(LOG_ERR, "db->put() failed for %s: %s",
+				    (const char *)(K.data),
+				    strerror(errno));
+				goto out;
+			}
+		}
+	}
 	r = rfc6287_verify(&ocra, suite_string, key, key_l, C, questions,
 	    P, P_l, NULL, 0, T, response, counter_window, &next_counter,
 	    timestamp_offset);
-	if (RFC6287_SUCCESS == r) {
+	if (kill_pin_used)
+		ret = PAM_AUTH_ERR;
+	else if (RFC6287_SUCCESS == r) {
 		if (ocra.flags & FL_C) {
 			KEY(K, "C");
 			V.data = &next_counter;
@@ -279,5 +319,7 @@ out:
 	free(suite_string);
 	free(key);
 	free(P);
+	if (KP != NULL)
+		free(KP);
 	return ret;
 }

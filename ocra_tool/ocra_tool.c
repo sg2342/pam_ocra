@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Stefan Grundmann
+ * Copyright (c) 2014,2018 Stefan Grundmann
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -127,6 +127,7 @@ usage(void)
 	fprintf(stderr,
 	    "usage: ocra_tool init -f credential_file -k key -s suite_string\n"
 	    "                     [-c counter] [-p pin | -P pin_hash]\n"
+	    "                     [-q kill_pin | -Q kill_pin_hash]\n"
 	    "                     [-w counter_window] [-t timestamp_offset]\n"
 	    "       ocra_tool info -f credential_file\n"
 	    "       ocra_tool sync -f credential_file -c challenge\n"
@@ -209,6 +210,8 @@ cmd_info(int argc, char **argv)
 		printf("counter_window: %d\n", CW);
 	}
 	if (ocra.flags & FL_P) {
+		int kill_pin_used = 0;
+
 		KEY(K, "P");
 		if (0 != (ret = db->get(db, &K, &V, 0)))
 			errx(EX_OSERR, "db->get() failed: %s",
@@ -220,6 +223,33 @@ cmd_info(int argc, char **argv)
 		for (i = 0; V.size > i; i++)
 			printf("%02x", ((uint8_t *)(V.data))[i]);
 		printf("\n");
+
+		KEY(K, "kill_pin");
+		ret = db->get(db, &K, &V, 0);
+		if (ret != 0 && ret != 1)
+			errx(EX_OSERR, "db->get() failed: %s", strerror(errno));
+		if (ret == 1 || V.size == 0)
+			printf("kill_pin_hash:\tNOT SET\n");
+		else {
+			if (mdlen(ocra.P_alg) != V.size) {
+				errx(EX_SOFTWARE,
+				    "kill pin hash size does not match suite!");
+			}
+			printf("kill_pin_hash:\t0x");
+			for (i = 0; V.size > i; i++)
+				printf("%02x", ((uint8_t *)(V.data))[i]);
+
+			printf("\n");
+		}
+
+		KEY(K, "kill_pin_used");
+		if (0 == (ret = db->get(db, &K, &V, 0))) {
+			memcpy(&kill_pin_used, V.data, sizeof(kill_pin_used));
+		} else if (ret != 1)
+			errx(EX_OSERR, "db->get() failed: %s", strerror(errno));
+
+		printf("kill pin used:\t%s\n",
+		    (ret == 1 || !kill_pin_used) ? "false" : "true");
 	}
 	if (ocra.flags & FL_T) {
 		int TO;
@@ -271,7 +301,8 @@ test_input(const ocra_suite * ocra, const char *suite_string,
 static void
 write_db(const char *fname, const char *suite_string,
     const uint8_t *key, size_t key_l, uint64_t C, const uint8_t *P,
-    size_t P_l, int counter_window, int timestamp_offset)
+    size_t P_l, const uint8_t *KP, size_t KP_l, int counter_window,
+    int timestamp_offset)
 {
 	DB *db;
 	DBT K, V;
@@ -303,6 +334,11 @@ write_db(const char *fname, const char *suite_string,
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
 		err(EX_OSERR, "db->put() failed");
 
+	KEY(K, "kill_pin");
+	VALUE(V, KP, KP_l);
+	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
+		err(EX_OSERR, "db->put() failed");
+
 	KEY(K, "counter_window");
 	VALUE(V, &counter_window, sizeof(counter_window));
 	if (0 != (db->put(db, &K, &V, R_NOOVERWRITE)))
@@ -330,6 +366,8 @@ cmd_init(int argc, char **argv)
 	char *key_string = NULL;
 	char *pin_string = NULL;
 	char *pin_hash_string = NULL;
+	char *kill_pin_string = NULL;
+	char *kill_pin_hash_string = NULL;
 	char *counter_string = NULL;
 	char *counter_window_string = NULL;
 	char *timestamp_offset_string = NULL;
@@ -339,12 +377,14 @@ cmd_init(int argc, char **argv)
 	int timestamp_offset = 0;
 	int counter_window = 0;
 
+	uint8_t *KP = NULL;
+	size_t KP_l = 0;
 	uint8_t *P = NULL;
 	size_t P_l = 0;
 	uint8_t *key = NULL;
 	size_t key_l = 0;
 
-	while (-1 != (ch = getopt(argc, argv, "f:s:k:p:P:c:w:t:"))) {
+	while (-1 != (ch = getopt(argc, argv, "f:s:k:p:P:c:w:t:q:Q:"))) {
 		switch (ch) {
 		case 'f':
 			if (NULL != fname)
@@ -375,6 +415,16 @@ cmd_init(int argc, char **argv)
 			if (NULL != pin_hash_string)
 				usage();
 			pin_hash_string = optarg;
+			break;
+		case 'q':
+			if (NULL != kill_pin_string)
+				usage();
+			kill_pin_string = optarg;
+			break;
+		case 'Q':
+			if (NULL != kill_pin_hash_string)
+				usage();
+			kill_pin_hash_string = optarg;
 			break;
 		case 'w':
 			if (NULL != counter_window_string)
@@ -439,19 +489,30 @@ cmd_init(int argc, char **argv)
 	if (ocra.flags & FL_P) {
 		if (NULL != pin_string && NULL != pin_hash_string)
 			errx(EX_CONFIG, "exactly one of -p <pin> and -P "
-			    "<pinhash> must be set");
+			    "<pin_hash> must be set");
 		if (NULL != pin_string)
 			pin_hash(&ocra, pin_string, &P, &P_l);
 		else if (NULL != pin_hash_string) {
 			P_l = mdlen(ocra.P_alg);
 			if (0 != from_hex(pin_hash_string, &P, P_l))
-				errx(EX_CONFIG, "invalid pinhash");
+				errx(EX_CONFIG, "invalid pin_hash");
 		} else
 			errx(EX_CONFIG, "suite requires pin parameter "
-			    "(-p <pin> or -P <pinhash> missing)");
-	} else if (NULL != pin_string || NULL != pin_hash_string)
+			    "(-p <pin> or -P <pin_hash> missing)");
+		if (NULL != kill_pin_string && NULL != kill_pin_hash_string)
+			errx(EX_CONFIG, "only one of -q <kill_pin> or -Q "
+			    "<kill_pin_hash> must be set");
+		if (NULL != kill_pin_string)
+			pin_hash(&ocra, kill_pin_string, &KP, &KP_l);
+		if (NULL != kill_pin_hash_string) {
+			KP_l = mdlen(ocra.P_alg);
+			if (0 != from_hex(kill_pin_hash_string, &KP, KP_l))
+				errx(EX_CONFIG, "invalid kill_pin_hash");
+		}
+	} else if (NULL != pin_string || NULL != pin_hash_string ||
+	    NULL != kill_pin_string || NULL != kill_pin_hash_string)
 		errx(EX_CONFIG, "suite does not require pin parameter"
-		    " (-p <pin> and -P <pinhash> must not be set)");
+		    " (-p <pin> and -P <pin_hash> must not be set)");
 
 	key_l = mdlen(ocra.hotp_alg);
 	if (0 != from_hex(key_string, &key, key_l))
@@ -460,7 +521,7 @@ cmd_init(int argc, char **argv)
 	test_input(&ocra, suite_string, key, key_l, C, P, P_l,
 	    counter_window, timestamp_offset);
 
-	write_db(fname, suite_string, key, key_l, C, P, P_l,
+	write_db(fname, suite_string, key, key_l, C, P, P_l, KP, KP_l,
 	    counter_window, timestamp_offset);
 
 }
@@ -487,6 +548,7 @@ cmd_sync_counter(int argc, char **argv)
 
 	DB *db = NULL;
 	DBT K, V;
+
 	memset(&K, 0, sizeof(K));
 	memset(&V, 0, sizeof(V));
 
@@ -578,7 +640,6 @@ cmd_sync_counter(int argc, char **argv)
 			errx(EX_SOFTWARE, "rfc6287_timestamp() failed: %s",
 			    rfc6287_err(r));
 	}
-
 	while (C < UINT64_MAX) {
 		r = rfc6287_verify(&ocra, suite_string, key, key_l, C,
 		    challenge, P, P_l, NULL, 0, T, response1, INT32_MAX,
