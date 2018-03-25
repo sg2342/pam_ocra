@@ -1,4 +1,4 @@
-/*-
+/*
  * Copyright (c) 2014 Stefan Grundmann
  * All rights reserved.
  *
@@ -128,7 +128,9 @@ usage(void)
 	    "usage: ocra_tool init -f credential_file -k key -s suite_string\n"
 	    "                     [-c counter] [-p pin | -P pin_hash]\n"
 	    "                     [-w counter_window] [-t timestamp_offset]\n"
-	    "       ocra_tool info -f credential_file\n");
+	    "       ocra_tool info -f credential_file\n"
+	    "       ocra_tool sync -f credential_file -c challenge\n"
+	    "                      -r response -v second_response\n");
 	exit(-1);
 }
 
@@ -463,6 +465,152 @@ cmd_init(int argc, char **argv)
 
 }
 
+static void
+cmd_sync_counter(int argc, char **argv)
+{
+	int r;
+	int ch;
+	char *fname = NULL;
+	char *challenge = NULL;
+	char *response1 = NULL;
+	char *response2 = NULL;
+	char *suite_string = NULL;
+
+	ocra_suite ocra;
+	int timestamp_offset = 0;
+	uint8_t *P = NULL;
+	uint8_t *key = NULL;
+	size_t P_l = 0;
+	size_t key_l = 0;
+	uint64_t C = 0;
+	uint64_t T = 0;
+
+	DB *db = NULL;
+	DBT K, V;
+	memset(&K, 0, sizeof(K));
+	memset(&V, 0, sizeof(V));
+
+	while (-1 != (ch = getopt(argc, argv, "f:c:r:v:"))) {
+		switch (ch) {
+		case 'f':
+			if (NULL != fname)
+				usage();
+			fname = optarg;
+			break;
+		case 'c':
+			if (NULL != challenge)
+				usage();
+			challenge = optarg;
+			break;
+		case 'r':
+			if (NULL != response1)
+				usage();
+			response1 = optarg;
+			break;
+		case 'v':
+			if (NULL != response2)
+				usage();
+			response2 = optarg;
+			break;
+		default:
+			usage();
+		}
+	}
+	argc -= optind;
+	if ((0 != argc) || (NULL == fname) || (NULL == challenge) ||
+	    (NULL == response1) || (NULL == response2))
+		usage();
+
+	if (NULL == (db = dbopen(fname, O_EXLOCK | O_RDWR, 0, DB_BTREE, NULL)))
+		err(EX_OSERR, "dbopen() failed");
+
+	KEY(K, "suite");
+	if (0 != (r = db->get(db, &K, &V, 0)))
+		errx(EX_OSERR, "db->get() failed: %s",
+		    (1 == r) ? "key not in db" : strerror(errno));
+	if (NULL == (suite_string = (char *)malloc(V.size)))
+		errx(EX_OSERR, "malloc() failed: %s", strerror(errno));
+	memcpy(suite_string, V.data, V.size);
+
+	if (RFC6287_SUCCESS != (r = rfc6287_parse_suite(&ocra, V.data)))
+		errx(EX_SOFTWARE, "rfc6287_parse_suite() failed: %s",
+		    rfc6287_err(r));
+
+	if (0 == (ocra.flags & FL_C))
+		errx(EX_CONFIG, "suite does not require counter, can not sync");
+
+	if (ocra.Q_l != (int)strlen(challenge))
+		errx(EX_CONFIG, "challenge length does not match suite (%d)",
+		    ocra.Q_l);
+
+	if ((ocra.hotp_trunc != (int)strlen(response1)) ||
+	    (ocra.hotp_trunc != (int)strlen(response2)))
+		errx(EX_CONFIG, "response length does not match suite (%d)",
+		    ocra.hotp_trunc);
+
+	KEY(K, "key");
+	if (0 != (r = db->get(db, &K, &V, 0)))
+		errx(EX_OSERR, "db->get() failed: %s",
+		    (1 == r) ? "key not in db" : strerror(errno));
+	if (NULL == (key = (uint8_t *)malloc(V.size)))
+		errx(EX_OSERR, "malloc() failed: %s", strerror(errno));
+	memcpy(key, V.data, V.size);
+	key_l = V.size;
+
+	if (ocra.flags & FL_P) {
+		KEY(K, "P");
+		if (0 != (r = db->get(db, &K, &V, 0)))
+			errx(EX_OSERR, "db->get() failed: %s",
+			    (1 == r) ? "key not in db" : strerror(errno));
+		if (NULL == (P = (uint8_t *)malloc(V.size)))
+			errx(EX_OSERR, "malloc() failed: %s", strerror(errno));
+		memcpy(P, V.data, V.size);
+		P_l = V.size;
+	}
+	if (ocra.flags & FL_T) {
+		KEY(K, "timestamp_offset");
+		if (0 != (r = db->get(db, &K, &V, 0)))
+			errx(EX_OSERR, "db->get() failed: %s",
+			    (1 == r) ? "key not in db" : strerror(errno));
+		memcpy(&timestamp_offset, V.data, sizeof(timestamp_offset));
+
+		if (0 != (r = rfc6287_timestamp(&ocra, &T)))
+			errx(EX_SOFTWARE, "rfc6287_timestamp() failed: %s",
+			    rfc6287_err(r));
+	}
+
+	while (C < UINT64_MAX) {
+		r = rfc6287_verify(&ocra, suite_string, key, key_l, C,
+		    challenge, P, P_l, NULL, 0, T, response1, INT32_MAX,
+		    &C, timestamp_offset);
+		if (r != RFC6287_SUCCESS)
+			continue;
+
+		printf("candidate:\t0x%.16" PRIx64 "\n", C);
+		r = rfc6287_verify(&ocra, suite_string, key, key_l, C,
+		    challenge, P, P_l, NULL, 0, T, response2, 1, &C,
+		    timestamp_offset);
+
+		if (r == RFC6287_SUCCESS) {
+			printf("match:\t\t0x%.16" PRIx64 "\n", C);
+			KEY(K, "C");
+			VALUE(V, &C, sizeof(C));
+			if (0 != (db->put(db, &K, &V, 0)))
+				err(EX_OSERR, "db->put() failed");
+			if (0 != (db->sync(db, 0)))
+				err(EX_OSERR, "db->sync() failed");
+			break;
+		}
+	}
+
+	if (0 != (db->close(db)))
+		err(EX_OSERR, "db->close() failed");
+	free(suite_string);
+	free(key);
+	if (P != NULL)
+		free(P);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -472,6 +620,8 @@ main(int argc, char **argv)
 		cmd_init(argc - 1, argv + 1);
 	else if (0 == strcmp(argv[1], "info"))
 		cmd_info(argc - 1, argv + 1);
+	else if (0 == strcmp(argv[1], "sync"))
+		cmd_sync_counter(argc - 1, argv + 1);
 	else
 		usage();
 	return 0;

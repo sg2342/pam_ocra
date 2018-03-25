@@ -1,4 +1,4 @@
-.\" Copyright (c) 2014 Stefan Grundmann
+.\" Copyright (c) 2014, 2018 Stefan Grundmann
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd October 4, 2014
+.Dd March 25, 2018
 .Dt OCRA_TOOL 8
 .Os
 .Sh NAME
@@ -49,6 +49,16 @@
 .Op Fl p Ar pin | Fl P Ar pinhash
 .Op Fl w Ar counter_window
 .Op Fl t Ar timestamp_offset
+.Nm
+.Cm sync
+.Fl f
+.Ar credential_file
+.Fl c
+.Ar challenge
+.Fl r
+.Ar response
+.Fl v
+.Ar second_response
 .Sh DESCRIPTION
 The
 .Nm
@@ -109,6 +119,22 @@ will make while verifying a response. The verify process will start at
 and end at (current_timestamp +
 .Ar timestamp_offset ) .
 This parameter is optional.
+.El
+.It Cm sync
+Synchronize the counter with two responses from the OTP device. Based on a
+user selectable challenge and two subsequent responses it is possible to brute
+force the counter in the OTP device.
+When the counter is found, the database is updated. The counter is searched from
+0 to UINT_MAX.
+.Bl -tag -width ".FL f"
+.It Fl f Ar credential_file
+the OCRA credential file.
+.It Fl c Ar challenge
+Challenge entered in the OTP device.
+.It Fl r Ar response
+First response for the given challenge.
+.It Fl v Ar second response
+Second response for the given challenge.
 .El
 .El
 .Sh EXAMPLE
