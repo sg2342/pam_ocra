@@ -246,7 +246,7 @@ verify(const char *path, const char *user_id, const char *questions,
 			goto out;
 		memcpy(&timestamp_offset, V.data, sizeof(timestamp_offset));
 
-		if (0 != rfc6287_timestamp(&ocra, &T)) {
+		if (0 != (r = rfc6287_timestamp(&ocra, &T))) {
 			syslog(LOG_ERR, "rfc6287_timestamp() failed: %s",
 			    rfc6287_err(r));
 			goto out;
