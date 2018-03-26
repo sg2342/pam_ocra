@@ -34,6 +34,17 @@ and sshd is configured to use PAM, "foobar" can log in using an OCRA token.
 Changelog
 ---------
 
+- 1.4:
+
+  * add ocra_tool sync: synchronize counter with OTP device
+
+  * introduce kill pin: If this pin is used, the the authentication fails, all
+    future authentications also fail
+
+  idea, interface, documentation and some code taken from
+
+  https://github.com/nilsrasmuszen/pam_ocra
+
 - 1.3:
 
   * fix pam_ocra "dir=" option
