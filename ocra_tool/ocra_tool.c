@@ -460,7 +460,7 @@ cmd_init(int argc, char **argv)
 		if (NULL != counter_window_string)
 			if (-1 ==
 			    (counter_window = parse_num(counter_window_string)))
-				errx(EX_CONFIG, "invalud counter window value");
+				errx(EX_CONFIG, "invalid counter window value");
 	} else {
 		if (NULL != counter_string)
 			errx(EX_CONFIG, "suite does not require counter "

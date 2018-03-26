@@ -1,4 +1,4 @@
-.\" Copyright (c) 2014 Stefan Grundmann
+.\" Copyright (c) 2014, 2018 Stefan Grundmann
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"
-.Dd September 30, 2014
+.Dd March 26, 2018
 .Dt PAM_OCRA 8
 .Os
 .Sh NAME
@@ -110,7 +110,7 @@ is set to
 .Sq Cm fail
 .Ns , then the module will return PAM_AUTH_ERR instead of PAM_AUTHINFO_UNAVAIL.
 .It Cm cmsg Ns = Ns Ar challenge_prompt Cm rmsg Ns = Ns Ar response_prompt
-Change the challange and/or the response prompts.  The
+Change the challenge and/or the response prompts.  The
 .Cm cmsg
 option changes the challenge prompt, and the
 .Cm rmsg
@@ -164,8 +164,8 @@ actual configuration file, the module and its options must be on one line.
 A PAM config file with the following entries:
 .Pp
 .Bd -literal
-auth require pam_unix.so no_warn null_ok
-auth require /usr/local/lib/pam_ocra.so \e
+auth required pam_unix.so no_warn null_ok
+auth required /usr/local/lib/pam_ocra.so \e
                  nodata=succeed fake_prompt=OCRA-1:HOTP-SHA1-6:QN06-PSHA1
 .Ed
 .Pp
@@ -179,7 +179,7 @@ A PAM config file with the following entries:
 .Pp
 .Bd -literal
 auth requisite pam_unix.so no_warn null_ok
-auth require /usr/local/lib/pam_ocra.so nodata=fail
+auth required /usr/local/lib/pam_ocra.so nodata=fail
 .Ed
 .Pp
 Would ask for a normal login password from all users, but only ask for an
