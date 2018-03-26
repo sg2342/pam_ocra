@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2014 Stefan Grundmann
+ * Copyright (c) 2014,2018 Stefan Grundmann
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -96,7 +96,7 @@ fmt_prompt(char *mbuf, int msize, const char *questions, const char *pmsg)
 
 			/*
 			 * Handle the conversion character.  If not understood,
-			 * the '%' will be quitely dropped.
+			 * the '%' will be quietly dropped.
 			 */
 			switch (*pptr) {
 			case '%':	/* Literal '%' */
@@ -156,7 +156,7 @@ make_prompt(char *buf, int bsize, const char *questions,
 	fmt_prompt(cbuf, sizeof(cbuf), questions, cmsg);
 	fmt_prompt(rbuf, sizeof(rbuf), questions, rmsg);
 
-	/* Concatinate them to the final prompt */
+	/* Concatenate them to the final prompt */
 	if (NULL != cmsg && NULL != rmsg) {
 		snprintf(buf, bsize, "%s\n%s", cbuf, rbuf);
 	} else if (NULL != cmsg) {

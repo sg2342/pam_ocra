@@ -34,6 +34,17 @@ and sshd is configured to use PAM, "foobar" can log in using an OCRA token.
 Changelog
 ---------
 
+- 1.4:
+
+  * add ocra_tool sync: synchronize counter with OTP device
+
+  * introduce kill pin: If this pin is used, the the authentication fails, all
+    future authentications also fail
+
+  idea, interface, documentation and some code taken from
+
+  https://github.com/nilsrasmuszen/pam_ocra
+
 - 1.3:
 
   * fix pam_ocra "dir=" option
@@ -57,7 +68,7 @@ Changelog
 
   * fix ocra_tool counter input:
     the -c counter option did not work for the whole value range of the counter
-    paramter.
+    parameter.
 
   * fix gcc builds:
     which where broken due to (cast-qual, format, sign-compare, ...) warnings.
@@ -65,7 +76,7 @@ Changelog
   * fix timstamp_offset verification:
     broken termination condition in timstamp_offset verify loop did not
     account for timstamp_offset==0. The result was that verification would
-    suceed for any timestamp.
+    succeed for any timestamp.
 
   * fix counter_window and timstamp_offset verification:
     broken termination condition in counter_window verify loop did not
@@ -73,7 +84,7 @@ Changelog
     would execute MAX_INT times before failing.
 
   * fix i368 builds:
-    incorrect sign-compare and 64bit specific format string triggerd warnings
+    incorrect sign-compare and 64bit specific format string triggered warnings
     which broke the build for i368 targets.
 
 - 1.0: first release

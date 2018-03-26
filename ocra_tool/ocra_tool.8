@@ -46,7 +46,8 @@
 .Fl k
 .Ar key
 .Op Fl c Ar counter
-.Op Fl p Ar pin | Fl P Ar pinhash
+.Op Fl p Ar pin | Fl P Ar pin_hash
+.Op Fl q Ar kill_pin | Fl Q Ar kill_pin_hash
 .Op Fl w Ar counter_window
 .Op Fl t Ar timestamp_offset
 .Nm
@@ -88,13 +89,24 @@ requires a counter parameter,
 is the initial counter value. If
 .Ar counter
 begins with '0x' it will be interpreted as hexadecimal number.
-.It Fl p Ar pin | Fl P Ar pinhash
+.It Fl p Ar pin | Fl P Ar pin_hash
 If the
 .Ar suite_string
 requires a pin-hash parameter, it is either set as hexadecimal string
-.Ar pinhash
+.Ar pin_hash
 or calculated from
 .Ar pin
+using the pin-hash algorithm in
+.Ar suite_string .
+.It Fl q Ar kill_pin | Fl Q Ar kill_pin_hash
+If the
+.Ar suite_string
+requires a pin-hash parameter, it is optional to provide a kill pin. If this
+pin is used, the the authentication fails, all future authentications also fail.
+The kill pin is set as hexadecimal string
+.Ar kill_pin_hash
+or calculated from
+.Ar kill_pin
 using the pin-hash algorithm in
 .Ar suite_string .
 .It Fl w Ar counter_window
@@ -155,6 +167,10 @@ counter:        0x000000000000000a
 counter_window: 50
 .sp 0
 pin_hash:       0x7110eda4d09e062aa5e4a390b0a572ac0d2c0220
+.sp 0
+kill_pin_hash:  NOT SET
+.sp 0
+kill pin used:  false
 .Lp
 .Sh FILES
 .Bl -tag -width Ds -compact
