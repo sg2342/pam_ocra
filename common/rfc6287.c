@@ -396,15 +396,17 @@ verify_c(const ocra_suite * ocra, off_t C_off, const uint8_t *key, size_t key_l,
     uint32_t counter_window, uint64_t *next_C)
 {
 	int ret;
+	uint64_t Counter = C;
 
-	*next_C = C;
 	do {
-		st64be(buf + C_off, *next_C);
-		(*next_C)++;
+		st64be(buf + C_off, Counter);
+		Counter++;
 		if (RFC6287_VERIFY_FAILED !=
-		    (ret = verify(ocra, key, key_l, buf, buf_l, resp)))
+		    (ret = verify(ocra, key, key_l, buf, buf_l, resp))) {
+			*next_C = Counter;
 			break;
-	} while (*next_C <= (C + counter_window));
+		}
+	} while (Counter <= (C + counter_window));
 	return ret;
 }
 
