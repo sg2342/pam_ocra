@@ -29,7 +29,12 @@
 #include <pwd.h>
 #include <string.h>
 #include <stdarg.h>
+#ifdef __linux__
+#include <db_185.h>
+#define O_EXLOCK 0
+#else
 #include <db.h>
+#endif
 #include <fcntl.h>
 #include <syslog.h>
 #include <errno.h>
