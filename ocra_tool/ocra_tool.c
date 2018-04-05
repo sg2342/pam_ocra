@@ -114,7 +114,7 @@ from_hex(const char *in, uint8_t **out, size_t len)
 		return -1;
 	for (i = 0; len > i; i++)
 		if (1 != sscanf(&in[i * 2], "%2hhx", *out + i) ||
-		    (!ishexnumber(in[(i * 2) + 1]))) {
+		    (!isxdigit(in[(i * 2) + 1]))) {
 			free(*out);
 			return -1;
 		}
