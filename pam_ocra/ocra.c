@@ -68,7 +68,7 @@ db_get(DB * db, DBT * K, DBT * V)
 		    (const char *)(K->data),
 		    (1 == r) ? "key not in db" : (strerror(errno)));
 	return r;
-};
+}
 
 static int
 open_db(DB ** db, int flags, const char *path, const char *user_id,
