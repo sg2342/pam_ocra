@@ -26,7 +26,11 @@
  */
 
 #include <sys/types.h>
+#ifdef __linux__
+#include <endian.h>
+#else
 #include <sys/endian.h>
+#endif
 #include <sys/time.h>
 #include <inttypes.h>
 #include <stdlib.h>
