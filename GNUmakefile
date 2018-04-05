@@ -9,10 +9,10 @@ TEST_LDFLAGS=-lcrypto
 TOOL_LDFLAGS=-lcrypto -ldb
 LIB_LDFLAGS=-shared -lcrypto -ldb -lpam
 
-DESTDIR?=/usr
-bindir?=/usr/bin
-mandir=/share/man
-libdir?=/lib/security
+DESTDIR?=/usr/local
+bindir?=bin
+mandir=share/man
+libdir?=lib
 
 all: ocra_tool/ocra_tool pam_ocra/pam_ocra.so
 
