@@ -273,7 +273,7 @@ verify(const char *path, const char *user_id, const char *questions,
 			goto out;
 		}
 	}
-	if (KP != NULL) {
+	if (NULL != KP) {
 		r = rfc6287_verify(&ocra, suite_string, key, key_l, C, questions,
 		    KP, KP_l, NULL, 0, T, response, counter_window, &next_counter,
 		    timestamp_offset);
