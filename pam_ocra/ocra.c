@@ -29,6 +29,7 @@
 #endif
 #include <stdio.h>
 #include <sys/types.h>
+#include <inttypes.h>
 #include <pwd.h>
 #include <string.h>
 #include <stdarg.h>
