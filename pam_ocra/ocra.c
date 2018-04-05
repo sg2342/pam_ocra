@@ -39,7 +39,11 @@
 #include <syslog.h>
 #include <errno.h>
 
+#ifdef __linux__
+#include <security/pam_appl.h>
+#else
 #include <security/pam_constants.h>
+#endif
 
 #include <openssl/evp.h>
 
