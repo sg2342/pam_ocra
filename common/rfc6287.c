@@ -356,6 +356,31 @@ st64be(uint8_t *p, uint64_t x)
 }
 
 static int
+hmac_new(HMAC_CTX ** ctx)
+{
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	if (NULL == (*ctx = (HMAC_CTX *) malloc(sizeof(HMAC_CTX))))
+		return RFC6287_ERR_POSIX;
+	HMAC_CTX_init(*ctx);
+#else
+	if (NULL == (*ctx = HMAC_CTX_new()))
+		return RFC6287_ERR_OPENSSL;
+#endif
+	return 0;
+}
+
+static void
+hmac_destroy(HMAC_CTX * ctx)
+{
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	HMAC_CTX_cleanup(ctx);
+	free(ctx);
+#else
+	HMAC_CTX_free(ctx);
+#endif
+}
+
+static int
 verify(const ocra_suite * ocra, const uint8_t *key, size_t key_l,
     const uint8_t *buf, size_t buf_l, const char *resp)
 {
@@ -363,21 +388,23 @@ verify(const ocra_suite * ocra, const uint8_t *key, size_t key_l,
 	unsigned int md_l = 20;
 	uint8_t *md = NULL;
 	char *tmp;
-	HMAC_CTX ctx;
+	HMAC_CTX *ctx = NULL;
+
+	if (0 != (ret = hmac_new(&ctx)))
+		return ret;
 
 	if (NULL == ((md = (uint8_t *)malloc(mdlen(ocra->hotp_alg)))))
 		return RFC6287_ERR_POSIX;
 
-	HMAC_CTX_init(&ctx);
-	if ((1 != HMAC_Init(&ctx, key, key_l, evp_md(ocra->hotp_alg))) ||
-	    (1 != HMAC_Update(&ctx, buf, (int)buf_l)) ||
-	    (1 != HMAC_Final(&ctx, md, &md_l)) ||
+	if ((1 != HMAC_Init_ex(ctx, key, key_l, evp_md(ocra->hotp_alg), NULL)) ||
+	    (1 != HMAC_Update(ctx, buf, (int)buf_l)) ||
+	    (1 != HMAC_Final(ctx, md, &md_l)) ||
 	    (md_l != mdlen(ocra->hotp_alg))) {
-		HMAC_CTX_cleanup(&ctx);
+		hmac_destroy(ctx);
 		free(md);
 		return RFC6287_ERR_OPENSSL;
 	}
-	HMAC_CTX_cleanup(&ctx);
+	hmac_destroy(ctx);
 	if (ocra->hotp_trunc) {
 		ret = truncate_md(md, md_l, ocra->hotp_trunc, &tmp);
 		free(md);
@@ -386,7 +413,7 @@ verify(const ocra_suite * ocra, const uint8_t *key, size_t key_l,
 	} else
 		tmp = (char *)md;
 	if (0 != memcmp(resp, tmp,
-		(ocra->hotp_trunc) ? (unsigned int)ocra->hotp_trunc : md_l))
+	    (ocra->hotp_trunc) ? (unsigned int)ocra->hotp_trunc : md_l))
 		ret = RFC6287_VERIFY_FAILED;
 	else
 		ret = RFC6287_SUCCESS;
@@ -466,7 +493,7 @@ rfc6287_ocra(const ocra_suite * ocra, const char *suite_string,
 	unsigned int md_l = 20;
 	int suite_l = strlen(suite_string) + 1;
 	int flags = ocra->flags;
-	HMAC_CTX ctx;
+	HMAC_CTX *ctx;
 
 	if ((0 != (ret = check_di_params(ocra, key_l, Q, P_l, S_l, T))) ||
 	    (0 != (ret = format_questions(ocra, qbuf, Q))))
@@ -477,26 +504,28 @@ rfc6287_ocra(const ocra_suite * ocra, const char *suite_string,
 	if (flags & FL_T)
 		st64be(TBE, T);
 
+	if (0 != (ret = hmac_new(&ctx)))
+		return ret;
+
 	if (NULL == (md = (uint8_t *)malloc(mdlen(ocra->hotp_alg))))
 		return RFC6287_ERR_POSIX;
 
-	HMAC_CTX_init(&ctx);
-	if ((1 != HMAC_Init(&ctx, key, key_l, evp_md(ocra->hotp_alg))) ||
+	if ((1 != HMAC_Init_ex(ctx, key, key_l, evp_md(ocra->hotp_alg), NULL)) ||
 	    (1 !=
-		HMAC_Update(&ctx, (const uint8_t *)suite_string, suite_l)) ||
-	    ((flags & FL_C) && (1 != HMAC_Update(&ctx, CBE, 8))) ||
-	    (1 != HMAC_Update(&ctx, qbuf, 128)) ||
-	    ((flags & FL_P) && (1 != HMAC_Update(&ctx, P, P_l))) ||
-	    ((flags & FL_S) && (1 != HMAC_Update(&ctx, S, S_l))) ||
-	    ((flags & FL_T) && (1 != HMAC_Update(&ctx, TBE, 8))) ||
+	    HMAC_Update(ctx, (const uint8_t *)suite_string, suite_l)) ||
+	    ((flags & FL_C) && (1 != HMAC_Update(ctx, CBE, 8))) ||
+	    (1 != HMAC_Update(ctx, qbuf, 128)) ||
+	    ((flags & FL_P) && (1 != HMAC_Update(ctx, P, P_l))) ||
+	    ((flags & FL_S) && (1 != HMAC_Update(ctx, S, S_l))) ||
+	    ((flags & FL_T) && (1 != HMAC_Update(ctx, TBE, 8))) ||
 	    (NULL == (md = (uint8_t *)malloc(mdlen(ocra->hotp_alg)))) ||
-	    (1 != HMAC_Final(&ctx, md, &md_l)) ||
+	    (1 != HMAC_Final(ctx, md, &md_l)) ||
 	    (md_l != mdlen(ocra->hotp_alg))) {
-		HMAC_CTX_cleanup(&ctx);
+		hmac_destroy(ctx);
 		free(md);
 		return RFC6287_ERR_OPENSSL;
 	}
-	HMAC_CTX_cleanup(&ctx);
+	hmac_destroy(ctx);
 	if (ocra->hotp_trunc) {
 		ret = truncate_md(md, md_l, ocra->hotp_trunc, resp);
 		free(md);
