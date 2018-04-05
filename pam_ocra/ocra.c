@@ -24,7 +24,10 @@
  * SUCH DAMAGE.
  *
  */
-
+#ifdef __linux__
+#define _GNU_SOURCE
+#endif
+#include <stdio.h>
 #include <sys/types.h>
 #include <pwd.h>
 #include <string.h>
