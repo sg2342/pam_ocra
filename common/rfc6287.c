@@ -241,7 +241,7 @@ hex2bin(uint8_t *out, const char *in)
 		memcpy(tmp, in, g);
 		tmp[g] = '0';
 		tmp[g + 1] = 0;
-		if (0 == BN_hex2bn(&B, (const char*)tmp)) {
+		if (0 == BN_hex2bn(&B, (const char *)tmp)) {
 			ret = RFC6287_ERR_OPENSSL;
 			goto err;
 		}
@@ -294,7 +294,7 @@ err:
 static int
 format_questions(const ocra_suite * ocra, uint8_t *out, const char *Q)
 {
-	int l=0;
+	int l = 0;
 
 	switch (ocra->Q_fmt) {
 	case a:
@@ -599,8 +599,8 @@ rfc6287_verify(const ocra_suite * ocra, const char *suite_string,
 			if (flags & FL_C) {
 				if (RFC6287_VERIFY_FAILED !=
 				    (ret = verify_c(ocra, C_off, key, key_l, C,
-					buf, buf_l, resp, counter_window,
-					next_C)))
+				    buf, buf_l, resp, counter_window,
+				    next_C)))
 					goto out;
 			} else if (RFC6287_VERIFY_FAILED !=
 			    (ret = verify(ocra, key, key_l, buf, buf_l, resp)))
