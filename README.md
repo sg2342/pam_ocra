@@ -6,33 +6,84 @@ pam_ocra
 Limitations
 -----------
 
-  - intended target platform is FreeBSD
+  - intended target platforms are FreeBSD and Linux
   - Session DataInput parameter is not supported
 
-Installation
+Installation FreeBSD
 ----------------
 
 Use the FreeBSD port security/pam_ocra
 
+Build/Installation Linux
+----------------
+
+pam_ocra depends on libcrypto (from OpenSSL or LibreSSL), BerkleyDB 5.3
+and Linux PAM
+
+
+- debuild (Debian, Ubuntu, ...)
+
+```
+$ wget https://github.com/sg2342/pam_ocra/archive/1.5/pam_ocra-1.5.tar.gz
+$ tar zxf pam_ocra-1.5.tag.gz
+$ cd pam_ocra-1.5
+$ debuild -i -us -uc -b
+$ sudo dpkg -i ../libpam-ocra_1.5_$(dpkg --print-architecture)*.deb
+```
+
+- rpm (RHEL7, CentOS7, Fedora, ...)
+
+```
+$ wget https://github.com/sg2342/pam_ocra/archive/1.5/pam_ocra-1.5.tar.gz
+$ rpmbuild -ta pam_ocra-1.5.tar.gz
+$ sudo rpm -i ~/rpmbuild/RPMS/$(uname -m)/pam_ocra-1.5-1.*.$(uname -m).rpm
+```
+
+- other
+
+```
+$ wget https://github.com/sg2342/pam_ocra/archive/1.5/pam_ocra-1.5.tar.gz
+$ tar zxf pam_ocra-1.5.tag.gz
+$ cd pam_ocra-1.5
+$ debuild -i -us -uc -b
+$ make -C pam_ocra-1.5
+$ sudo make -C pam_ocra-1.5 install
+```
+
 Basic Use
 --------------
 
+    $ man pam_ocra
+    $ man ocra_tool
     $ ocra_tool init -f ~foobar/.ocra \
               -s OCRA-1:HOTP-SHA1-6:C-QN08-PSHA1 \
               -k 00112233445566778899aabbccddeeff00112233 \
-              -c 10 -w 50 -p 1234
+              -c 0 -w 50 -p 1234
 
 will create the ocra db file ".ocra" in the home directory of user "foobar";
 set the OCRA suite, key, counter, counter_window and pin.
 
 if for example /etc/pam.d/sshd has the line
 
-    auth    sufficient    /usr/local/lib/pam_ocra.so
+    auth    required    pam_ocra.so
 
-and sshd is configured to use PAM, "foobar" can log in using an OCRA token.
+and sshd is configured to use PAM and ChallengeResponseAuthentication, "foobar"
+can log in using an OCRA token.
 
 Changelog
 ---------
+- 1.5: (NOT RELEASED YET)
+
+  * change credential file look-up:
+    if the pam module option dir= is set ~/.ocra files will NOT be used
+
+  * new formatting directive for cmsg/rmsg: %Nc (split challenge string
+    to increase readability, default cmsg is now "OCRA Challenge: %4c";
+    the challenge string is split into groups of 4 characters)
+
+  * fix counter handling in ocra_tool sync
+
+  * Linux support (Linux PAM, OpenSSL old and new API, rpm and deb packaging)
 
 - 1.4:
 
