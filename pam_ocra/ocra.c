@@ -83,10 +83,13 @@ open_db(DB ** db, int flags, const char *path, const char *user_id,
 	if (NULL == (pwd = getpwnam(user_id)))
 		return PAM_USER_UNKNOWN;
 
-	asprintf(&p1, "%s/.ocra", pwd->pw_dir);
+	if (0 > asprintf(&p1, "%s/.ocra", pwd->pw_dir))
+		return PAM_SERVICE_ERR;
+
 	if (NULL == (*db = dbopen(p1, flags, 0, DB_BTREE, NULL))) {
 		if (NULL != path) {
-			asprintf(&p2, "%s/%s", path, user_id);
+			if (0 > asprintf(&p2, "%s/%s", path, user_id))
+				return PAM_SERVICE_ERR;
 			if (NULL == (*db = dbopen(p2, flags, 0, DB_BTREE, NULL))) {
 				ep = p2;
 			}
