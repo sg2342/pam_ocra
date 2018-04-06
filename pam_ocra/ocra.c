@@ -24,17 +24,30 @@
  * SUCH DAMAGE.
  *
  */
-
+#ifdef __linux__
+#define _GNU_SOURCE
+#endif
+#include <stdio.h>
 #include <sys/types.h>
+#include <inttypes.h>
 #include <pwd.h>
 #include <string.h>
 #include <stdarg.h>
+#ifdef __linux__
+#include <db_185.h>
+#define O_EXLOCK 0
+#else
 #include <db.h>
+#endif
 #include <fcntl.h>
 #include <syslog.h>
 #include <errno.h>
 
+#ifdef __linux__
+#include <security/pam_appl.h>
+#else
 #include <security/pam_constants.h>
+#endif
 
 #include <openssl/evp.h>
 
@@ -56,7 +69,7 @@ db_get(DB * db, DBT * K, DBT * V)
 		    (const char *)(K->data),
 		    (1 == r) ? "key not in db" : (strerror(errno)));
 	return r;
-};
+}
 
 static int
 open_db(DB ** db, int flags, const char *path, const char *user_id,
@@ -70,10 +83,13 @@ open_db(DB ** db, int flags, const char *path, const char *user_id,
 	if (NULL == (pwd = getpwnam(user_id)))
 		return PAM_USER_UNKNOWN;
 
-	asprintf(&p1, "%s/.ocra", pwd->pw_dir);
+	if (0 > asprintf(&p1, "%s/.ocra", pwd->pw_dir))
+		return PAM_SERVICE_ERR;
+
 	if (NULL == (*db = dbopen(p1, flags, 0, DB_BTREE, NULL))) {
 		if (NULL != path) {
-			asprintf(&p2, "%s/%s", path, user_id);
+			if (0 > asprintf(&p2, "%s/%s", path, user_id))
+				return PAM_SERVICE_ERR;
 			if (NULL == (*db = dbopen(p2, flags, 0, DB_BTREE, NULL))) {
 				ep = p2;
 			}

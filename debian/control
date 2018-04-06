@@ -1,0 +1,22 @@
+Source: libpam-ocra
+Priority: optional
+Maintainer: Stefan Grundmann <sg2342@googlemail.com>
+Build-Depends: 	debhelper (>= 9),
+ 		libpam0g-dev,
+               	libdb-dev,
+	       	libssl-dev
+Standards-Version: 3.9.8
+Section: admin
+Homepage: https://github.com/sg2342/pam_ocra
+Vcs-Git:  https://github.com/sg2342/pam_ocra.git
+Vcs-Browser: https://github.com/sg2342/pam_ocra.git
+
+Package: libpam-ocra
+Architecture: any
+Depends: libpam-runtime,
+	 libdb,
+	 libssl,
+	 ${shlibs:Depends}, ${misc:Depends}
+Description: Pluggable Authentication Module for RFC6287 OCRA
+ This is pam_ocra, a pluggable authentication module that can be used with
+ Linux-PAM and RFC6287 OCRA (OATH Challenge-Response Algorithm) tokens.

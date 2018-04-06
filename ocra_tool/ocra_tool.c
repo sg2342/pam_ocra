@@ -36,7 +36,12 @@
 #include <errno.h>
 #include <sysexits.h>
 
+#ifdef __linux__
+#include <db_185.h>
+#define O_EXLOCK 0
+#else
 #include <db.h>
+#endif
 #include <fcntl.h>
 
 #include <openssl/evp.h>
@@ -54,22 +59,22 @@ static void
 pin_hash(const ocra_suite * ocra, const char *pin, uint8_t **P, size_t *P_l)
 {
 	unsigned int s;
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 
 	*P = NULL;
 	*P_l = mdlen(ocra->P_alg);
-	EVP_MD_CTX_init(&ctx);
+	ctx = EVP_MD_CTX_create();
 
 	if (NULL == (*P = (uint8_t *)malloc(*P_l)))
 		err(EX_OSERR, "malloc() failed");
 
-	if ((1 != EVP_DigestInit(&ctx, evp_md(ocra->P_alg))) ||
-	    (1 != EVP_DigestUpdate(&ctx, pin, strlen(pin))) ||
-	    (1 != EVP_DigestFinal(&ctx, *P, &s)) ||
+	if ((1 != EVP_DigestInit(ctx, evp_md(ocra->P_alg))) ||
+	    (1 != EVP_DigestUpdate(ctx, pin, strlen(pin))) ||
+	    (1 != EVP_DigestFinal(ctx, *P, &s)) ||
 	    (s != *P_l))
 		errx(EX_OSERR, "pin_hash() failed: %s",
 		    ERR_error_string(ERR_get_error(), NULL));
-	EVP_MD_CTX_cleanup(&ctx);
+	EVP_MD_CTX_destroy(ctx);
 }
 
 static int

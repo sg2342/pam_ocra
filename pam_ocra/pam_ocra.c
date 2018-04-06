@@ -34,7 +34,9 @@
 
 #include <security/pam_modules.h>
 #include <security/pam_appl.h>
+#ifndef __linux__
 #include <security/openpam.h>
+#endif
 
 #include "ocra.h"
 
@@ -210,19 +212,35 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	char fmt[512];
 
 	(void)flags;
+
+	/* Get options */
+#ifdef __linux__
+	while (argc--) {
+		if (0 == strncmp(*argv, "fake_prompt=", 12))
+			fake_suite = *argv + 12;
+		else if (0 == strncmp(*argv, "dir=", 4))
+			dir = *argv + 4;
+		else if (0 == strncmp(*argv, "nodata=", 7))
+			nodata = *argv + 7;
+		else if (0 == strncmp(*argv, "cmsg=", 5))
+			cmsg = *argv + 5;
+		else if (0 == strncmp(*argv, "rmsg=", 5))
+			rmsg = *argv + 5;
+		argv++;
+	}
+#else
 	(void)argc;
 	(void)argv;
 
-	pam_get_item(pamh, PAM_USER, (const void **)&user);
-
-	openlog("pam_ocra", 0, LOG_AUTHPRIV);
-
-	/* Get options */
 	fake_suite = openpam_get_option(pamh, "fake_prompt");
 	dir = openpam_get_option(pamh, "dir");
 	nodata = openpam_get_option(pamh, "nodata");
 	cmsg = openpam_get_option(pamh, "cmsg");
 	rmsg = openpam_get_option(pamh, "rmsg");
+#endif
+	pam_get_item(pamh, PAM_USER, (const void **)&user);
+
+	openlog("pam_ocra", 0, LOG_AUTHPRIV);
 
 	/*
 	 * Generate the challenge "question".  If the user doesn't have any
@@ -327,4 +345,6 @@ pam_sm_close_session(pam_handle_t *pamh, int flags, int argc, const char *argv[]
 	return PAM_SUCCESS;
 }
 
+#ifdef PAM_MODULE_ENTRY
 PAM_MODULE_ENTRY("pam_ocra");
+#endif
