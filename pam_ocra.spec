@@ -1,5 +1,5 @@
 Name:           pam_ocra
-Version:        1.5alpha1
+Version:        1.5
 Release:        1%{?dist}
 Summary:        A Pluggable Authentication Module for RFC6287 OCRA
 
