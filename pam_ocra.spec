@@ -15,6 +15,8 @@ BuildRequires:  pam-devel gcc make libdb-devel openssl-devel
 This is pam_ocra, a pluggable authentication module that can be used with
 Linux-PAM and RFC6287 OCRA (OATH Challenge-Response Algorithm) tokens.
 
+%global debug_package %{nil}
+
 %prep
 %setup -q
 
@@ -23,7 +25,7 @@ make
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make DESTDIR=$RPM_BUILD_ROOT libdir=%{_lib}/security bindir=%{_bindir} mandir=%{_mandir} install
+make DESTDIR=$RPM_BUILD_ROOT pamdir=/%{_lib}/security bindir=%{_bindir} mandir=%{_mandir} install
 
 %clean
 rm -rf $RPM_BUILD_ROOT

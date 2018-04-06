@@ -9,10 +9,12 @@ TEST_LDFLAGS=-lcrypto
 TOOL_LDFLAGS=-lcrypto -ldb
 LIB_LDFLAGS=-shared -lcrypto -ldb -lpam
 
-DESTDIR?=/usr/local
-bindir?=bin
-mandir=share/man
-libdir?=lib
+prefix = /usr/local
+bindir = $(prefix)/bin
+sharedir = $(prefix)/share
+mandir = $(sharedir)/man
+man8dir = $(mandir)/man8
+pamdir = $(prefix)/lib/security
 
 all: ocra_tool/ocra_tool pam_ocra/pam_ocra.so
 
@@ -20,13 +22,11 @@ test: rfc6287_test/rfc6287_test
 	$^
 
 install: all
-	mkdir -p ${DESTDIR}/${mandir}/man8 \
-		 ${DESTDIR}/${bindir} \
-		${DESTDIR}/${libdir}
+	mkdir -p $(DESTDIR)$(bindir) $(DESTDIR)$(man8dir) $(DESTDIR)$(pamdir)
 	install -m 644 ocra_tool/ocra_tool.8 pam_ocra/pam_ocra.8 \
-		${DESTDIR}/${mandir}/man8
-	install -s ocra_tool/ocra_tool ${DESTDIR}/${bindir}
-	install -s pam_ocra/pam_ocra.so ${DESTDIR}/${libdir}
+		$(DESTDIR)$(man8dir)
+	install -s ocra_tool/ocra_tool $(DESTDIR)$(bindir)
+	install -s pam_ocra/pam_ocra.so $(DESTDIR)$(pamdir)
 
 clean:
 	rm -rf 	ocra_tool/ocra_tool pam_ocra/pam_ocra.so \
