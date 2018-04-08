@@ -77,34 +77,32 @@ open_db(DB ** db, int flags, const char *path, const char *user_id,
 {
 	int r = PAM_SUCCESS;
 	struct passwd *pwd = NULL;
-	char *p1, *p2;
-	char *ep = NULL;
+	char *p = NULL;
 
-	if (NULL == (pwd = getpwnam(user_id)))
-		return PAM_USER_UNKNOWN;
 
-	if (0 > asprintf(&p1, "%s/.ocra", pwd->pw_dir))
-		return PAM_SERVICE_ERR;
-
-	if (NULL == (*db = dbopen(p1, flags, 0, DB_BTREE, NULL))) {
-		if (NULL != path) {
-			if (0 > asprintf(&p2, "%s/%s", path, user_id))
-				return PAM_SERVICE_ERR;
-			if (NULL == (*db = dbopen(p2, flags, 0, DB_BTREE, NULL))) {
-				ep = p2;
-			}
-		} else {
-			ep = p1;
+	if (NULL != path) {
+		if (0 > asprintf(&p, "%s/%s", path, user_id))
+			return PAM_SERVICE_ERR;
+	} else {
+		if (NULL == (pwd = getpwnam(user_id))) {
+			if (NULL != fake_suite)
+				return PAM_NO_MODULE_DATA;
+			else
+				return PAM_AUTHINFO_UNAVAIL;
 		}
+		if (0 > asprintf(&p, "%s/.ocra", pwd->pw_dir))
+			return PAM_SERVICE_ERR;
 	}
+
+
 	/* Handle file open errors */
-	if (NULL != ep) {
+	if (NULL == (*db = dbopen(p, flags, 0, DB_BTREE, NULL))) {
 		if (NULL != fake_suite) {
 			/* Indicate that a fake challenge must be generated */
 			r = PAM_NO_MODULE_DATA;
-		} else if (NULL == nodata || strcmp(nodata, "fail") == 0) {
+		} else if (NULL == nodata || 0 == strcmp(nodata, "fail")) {
 			/* We know we want to fail, so log an error. */
-			syslog(LOG_ERR, "dbopen(\"%s\", ...) failed: %s", ep,
+			syslog(LOG_ERR, "dbopen(\"%s\", ...) failed: %s", p,
 			    strerror(errno));
 			r = PAM_AUTHINFO_UNAVAIL;
 		} else {
@@ -335,7 +333,7 @@ out:
 	free(suite_string);
 	free(key);
 	free(P);
-	if (KP != NULL)
+	if (NULL != KP)
 		free(KP);
 	return ret;
 }
