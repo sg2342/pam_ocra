@@ -125,6 +125,9 @@ directives may be used:
 .Bl -tag -width ".So \  Sc (space)"
 .It Sq Cm %c
 Insert the challenge question.
+.It Sq Cm %Nc
+The challenge question with a spaces inserted after every N-th character
+ (N>=1, N=<9).
 .It Sq Cm %u
 Insert a UTC timestamp in
 .Cm ISO-8601
@@ -147,7 +150,7 @@ timestamp.
 Insert a literal % character.
 .El
 .Pp
-The default challenge prompt is "OCRA Challenge: %c" and the default response
+The default challenge prompt is "OCRA Challenge: %4c" and the default response
 prompt is "OCRA Response: "
 .El
 .Sh FILES
