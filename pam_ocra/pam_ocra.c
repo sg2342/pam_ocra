@@ -80,64 +80,94 @@ fmt_prompt(char *mbuf, int msize, const char *questions, const char *pmsg)
 	int mrsize = 0;
 	time_t epoch_seconds;
 	struct tm *now;
+	char fmt[] = "%.Ns ";
+	int N, i, j, ql;
 
+	if (NULL == pmsg) {
+		if (msize)
+			*mptr = '\0';
+		return;
+	}
 	msize--;			/* Ensure we always have room for
 					 * trailing '\0' */
-	if (NULL != pmsg) {
-		while ((mrsize < msize) && *pptr != '\0') {
-			/* Copy over the first part of the string */
-			while ((mrsize < msize) && *pptr != '\0') {
-				if (*pptr != '%') {
-					*mptr++ = *pptr++;
-					mrsize++;
-				} else {
-					pptr++;
-					break;
-				}
-			}
 
-			/*
-			 * Handle the conversion character.  If not understood,
-			 * the '%' will be quietly dropped.
-			 */
-			switch (*pptr) {
-			case '%':	/* Literal '%' */
-				*mptr++ = '%';
+	ql = strlen(questions);
+
+	while ((mrsize < msize) && '\0' != *pptr) {
+		/* Copy over the first part of the string */
+		while ((mrsize < msize) && '\0' != *pptr) {
+			if ('%' != *pptr) {
+				*mptr++ = *pptr++;
 				mrsize++;
-				pptr++;
-				break;
-
-			case 'u':	/* UTC time */
-				time(&epoch_seconds);
-				now = gmtime(&epoch_seconds);
-				strftime(mptr, msize - mrsize,
-				    "%Y-%m-%dT%H:%M:%SZ %Z", now);
-				mrsize = strlen(mbuf);
-				mptr = &mbuf[mrsize];
-				pptr++;
-				break;
-
-			case 'l':	/* Local time */
-				time(&epoch_seconds);
-				now = localtime(&epoch_seconds);
-				strftime(mptr, msize - mrsize,
-				    "%Y-%m-%dT%H:%M:%S%z %Z", now);
-				mrsize = strlen(mbuf);
-				mptr = &mbuf[mrsize];
-				pptr++;
-				break;
-
-			case 'c':	/* Challenge question */
-				snprintf(mptr, msize - mrsize,
-				    "%s", questions);
-				mrsize = strlen(mbuf);
-				mptr = &mbuf[mrsize];
+			} else {
 				pptr++;
 				break;
 			}
 		}
 
+		/*
+		 * Handle the conversion character.  If not understood,
+		 * the '%' will be quietly dropped.
+		 */
+		switch (*pptr) {
+		case '%':		/* Literal '%' */
+			*mptr++ = '%';
+			mrsize++;
+			pptr++;
+			break;
+
+		case 'u':		/* UTC time */
+			time(&epoch_seconds);
+			now = gmtime(&epoch_seconds);
+			strftime(mptr, msize - mrsize,
+			    "%Y-%m-%dT%H:%M:%SZ %Z", now);
+			mrsize = strlen(mbuf);
+			mptr = &mbuf[mrsize];
+			pptr++;
+			break;
+
+		case 'l':		/* Local time */
+			time(&epoch_seconds);
+			now = localtime(&epoch_seconds);
+			strftime(mptr, msize - mrsize,
+			    "%Y-%m-%dT%H:%M:%S%z %Z", now);
+			mrsize = strlen(mbuf);
+			mptr = &mbuf[mrsize];
+			pptr++;
+			break;
+
+		case 'c':		/* Challenge question */
+			snprintf(mptr, msize - mrsize,
+			    "%s", questions);
+			mrsize = strlen(mbuf);
+			mptr = &mbuf[mrsize];
+			pptr++;
+			break;
+		default:		/* Maybe %Nc */
+			if ('0' < *pptr && '9' >= *pptr && 'c' == *(pptr + 1)) {
+				fmt[2] = *pptr;	/* set precision in fmt to N */
+				N = *pptr - '0';	/* int value */
+
+				/* print with fmt */
+				for (i = 0, j = ql % N ? ql / N : ql / N - 1;
+				    0 < j; i += N, j--) {
+					snprintf(mptr, msize - mrsize,
+					    fmt, questions + i);
+					mrsize = strlen(mbuf);
+					mptr = &mbuf[mrsize];
+				}
+
+				/* print remaining */
+				snprintf(mptr, msize - mrsize, "%s",
+				    questions + i);
+				mrsize = strlen(mbuf);
+				mptr = &mbuf[mrsize];
+				pptr += 2;
+			}
+			break;
+		}
 	}
+
 	/* Terminate the prompt string */
 	*mptr = '\0';
 }
@@ -151,7 +181,7 @@ make_prompt(char *buf, int bsize, const char *questions,
 
 	/* Create the default prompt strings, if necessary */
 	if (NULL == cmsg && NULL == rmsg) {
-		cmsg = "OCRA Challenge: %c";
+		cmsg = "OCRA Challenge: %4c";
 		rmsg = "OCRA Response: ";
 	}
 	/* Generate each prompt */
