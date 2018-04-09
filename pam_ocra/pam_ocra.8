@@ -158,18 +158,21 @@ prompt is "OCRA Response: "
 .It Pa ~/.ocra
 .El
 OCRA credential file
+.Sh NOTES
+LinuxPAM does not handle quoted strings in pam module options.
+When Linux PAM is uses instead of OpenPAM, options that contain spaces must be
+surrounded by square brackets instead of quoting the option value.
 .Sh EXAMPLES
 Note that in the following examples, the pam_ocra.so entry in the PAM
 configuration file is shown on multiple lines for readability purposes.  In the
 actual configuration file, the module and its options must be on one line.
 .Pp
-.Pp
 A PAM config file with the following entries:
 .Pp
 .Bd -literal
 auth required pam_unix.so no_warn null_ok
-auth required /usr/local/lib/pam_ocra.so \e
-                 nodata=succeed fake_prompt=OCRA-1:HOTP-SHA1-6:QN06-PSHA1
+auth required pam_ocra.so \e
+        nodata=succeed fake_prompt=OCRA-1:HOTP-SHA1-6:QN06-PSHA1
 .Ed
 .Pp
 Would ask for both a normal login password and an OCRA response from all users.
@@ -182,7 +185,7 @@ A PAM config file with the following entries:
 .Pp
 .Bd -literal
 auth requisite pam_unix.so no_warn null_ok
-auth required /usr/local/lib/pam_ocra.so nodata=fail
+auth required pam_ocra.so nodata=fail
 .Ed
 .Pp
 Would ask for a normal login password from all users, but only ask for an
@@ -203,8 +206,11 @@ OCRA Response:
 If the options included the following prompt changes:
 .Bd -literal
 cmsg="%u" rmsg="OTP Response to %c: "
-.Ed
 .Pp
+or in case LinuxPAM is used:
+.Bd -literal
+cmsg=%u [rmsg=OTP Response to %c: ]
+.Ed
 Then the prompts would look similar to:
 .Bd -literal
 2017-07-20T21:26:43Z UTC
@@ -214,12 +220,16 @@ OTP Response to 123456:
 .Pp
 Similarly if the options included the following prompt changes:
 .Bd -literal
-cmsg="%l - Challenge: %c" rmsg="Response: "
+cmsg="%l - Challenge: %3c" rmsg="Response: "
+.Pp
+LinuxPAM version:
+.Bd -literal
+[cmsg=%l - Challenge: %3c] [rmsg=Response: ]
 .Ed
 .Pp
 Then the prompts would look similar to:
 .Bd -literal
-2017-07-20T16:26:43-0500 CDT - Challenge: 123456
+2017-07-20T16:26:43-0500 CDT - Challenge: 123 456
 Response:
 .Ed
 .Sh SEE ALSO
