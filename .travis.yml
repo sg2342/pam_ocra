@@ -1,0 +1,12 @@
+sudo: required
+language: c
+compiler: clang
+
+before_install:
+  - sudo apt-get install libpam0g-dev libdb5.3-dev libssl-dev
+
+script:
+  - make && make test
+
+if:
+  tag IS blank
