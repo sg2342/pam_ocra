@@ -74,7 +74,7 @@ can log in using an OCRA token.
 
 Changelog
 ---------
-- 1.5: (NOT RELEASED YET)
+- 1.5:
 
   * change credential file look-up:
     if the pam module option dir= is set ~/.ocra files will NOT be used
