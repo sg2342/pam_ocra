@@ -358,7 +358,8 @@ st64be(uint8_t *p, uint64_t x)
 static int
 hmac_new(HMAC_CTX ** ctx)
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || \
+    OPENSSL_VERSION_NUMBER == 0x20000000L
 	if (NULL == (*ctx = (HMAC_CTX *) malloc(sizeof(HMAC_CTX))))
 		return RFC6287_ERR_POSIX;
 	HMAC_CTX_init(*ctx);
@@ -372,7 +373,8 @@ hmac_new(HMAC_CTX ** ctx)
 static void
 hmac_destroy(HMAC_CTX * ctx)
 {
-#if OPENSSL_VERSION_NUMBER < 0x10100000L
+#if OPENSSL_VERSION_NUMBER < 0x10100000L || \
+    OPENSSL_VERSION_NUMBER == 0x20000000L
 	HMAC_CTX_cleanup(ctx);
 	free(ctx);
 #else
