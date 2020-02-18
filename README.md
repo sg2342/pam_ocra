@@ -2,6 +2,7 @@ pam_ocra
 =======
 [![Build Status](https://travis-ci.org/sg2342/pam_ocra.svg?branch=master)](https://travis-ci.org/sg2342/pam_ocra)
 
+[![Cirrus CI Build Status](https://api.cirrus-ci.com/github/sg2342/pam_ocra.svg)](https://cirrus-ci.com/github/sg2342/pam_ocra)
 
 [RFC6287](http://tools.ietf.org/html/rfc6287) (OCRA) pam module
 
