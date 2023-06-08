@@ -15,7 +15,7 @@ Package: libpam-ocra
 Architecture: any
 Depends: libpam-runtime,
 	 libdb5.3,
-	 libssl1.1,
+	 libssl3,
 	 ${shlibs:Depends}, ${misc:Depends}
 Description: Pluggable Authentication Module for RFC6287 OCRA
  This is pam_ocra, a pluggable authentication module that can be used with

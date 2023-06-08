@@ -1,8 +1,5 @@
 pam_ocra
 =======
-[![Build Status](https://travis-ci.org/sg2342/pam_ocra.svg?branch=master)](https://travis-ci.org/sg2342/pam_ocra)
-
-[![Cirrus CI Build Status](https://api.cirrus-ci.com/github/sg2342/pam_ocra.svg)](https://cirrus-ci.com/github/sg2342/pam_ocra)
 
 [RFC6287](http://tools.ietf.org/html/rfc6287) (OCRA) pam module
 
@@ -27,30 +24,29 @@ and Linux PAM
 - debuild (Debian, Ubuntu, ...)
 
 ```
-$ wget https://github.com/sg2342/pam_ocra/archive/1.5/pam_ocra-1.5.tar.gz
-$ tar zxf pam_ocra-1.5.tag.gz
-$ cd pam_ocra-1.5
+$ wget https://github.com/sg2342/pam_ocra/archive/1.6/pam_ocra-1.6.tar.gz
+$ tar zxf pam_ocra-1.6.tar.gz
+$ cd pam_ocra-1.6
 $ debuild -i -us -uc -b
-$ sudo dpkg -i ../libpam-ocra_1.5_$(dpkg --print-architecture)*.deb
+$ sudo dpkg -i ../libpam-ocra_1.6_$(dpkg --print-architecture)*.deb
 ```
 
 - rpm (RHEL7, CentOS7, Fedora, ...)
 
 ```
-$ wget https://github.com/sg2342/pam_ocra/archive/1.5/pam_ocra-1.5.tar.gz
-$ rpmbuild -ta pam_ocra-1.5.tar.gz
-$ sudo rpm -i ~/rpmbuild/RPMS/$(uname -m)/pam_ocra-1.5-1.*.$(uname -m).rpm
+$ wget https://github.com/sg2342/pam_ocra/archive/1.6/pam_ocra-1.6.tar.gz
+$ rpmbuild -ta pam_ocra-1.6.tar.gz
+$ sudo rpm -i ~/rpmbuild/RPMS/$(uname -m)/pam_ocra-1.6-1.*.$(uname -m).rpm
 ```
 
 - other
 
 ```
-$ wget https://github.com/sg2342/pam_ocra/archive/1.5/pam_ocra-1.5.tar.gz
-$ tar zxf pam_ocra-1.5.tag.gz
-$ cd pam_ocra-1.5
-$ debuild -i -us -uc -b
-$ make -C pam_ocra-1.5
-$ sudo make -C pam_ocra-1.5 install
+$ wget https://github.com/sg2342/pam_ocra/archive/1.5/pam_ocra-1.6.tar.gz
+$ tar zxf pam_ocra-1.6.tar.gz
+$ cd pam_ocra-1.6
+$ make -C pam_ocra-1.6
+$ sudo make -C pam_ocra-1.6 install
 ```
 
 Basic Use
@@ -75,6 +71,10 @@ can log in using an OCRA token.
 
 Changelog
 ---------
+- 1.6:
+
+  * support OpenSSL 3.0
+
 - 1.5:
 
   * change credential file look-up:

@@ -239,7 +239,7 @@ pam_sm_authenticate(pam_handle_t *pamh, int flags,
 	char *questions;
 	const char *user;
 	char *response = NULL;
-	char fmt[512];
+	char fmt[1024];
 
 	(void)flags;
 

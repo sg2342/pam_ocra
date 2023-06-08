@@ -1,5 +1,5 @@
 Name:           pam_ocra
-Version:        1.5
+Version:        1.6
 Release:        1%{?dist}
 Summary:        A Pluggable Authentication Module for RFC6287 OCRA
 
@@ -39,5 +39,7 @@ rm -rf $RPM_BUILD_ROOT
 %{_mandir}/man8/ocra_tool.8.gz
 
 %changelog
+* Thu Jun 8 2023 2018 Stefan Grundmann <sg2342@googlemail.com> - 1.6-1
+- support OpenSSL 3.0
 * Thu Apr 5 2018 Stefan Grundmann <sg2342@googlemail.com> - 1.5-1
 - initial packaging

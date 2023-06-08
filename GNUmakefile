@@ -35,10 +35,10 @@ clean:
 		pam_ocra/ocra.o pam_ocra/pam_ocra.o
 
 rfc6287_test/rfc6287_test: common/rfc6287.o rfc6287_test/rfc6287_test.o
-	${CC} ${TEST_LDFLAGS} -o $@ $^
+	${CC} -o $@ $^ ${TEST_LDFLAGS}
 
 ocra_tool/ocra_tool: common/rfc6287.o ocra_tool/ocra_tool.o
-	${CC} ${TOOL_LDFLAGS} -o $@ $^
+	${CC} -o $@ $^ ${TOOL_LDFLAGS}
 
 pam_ocra/pam_ocra.so: common/rfc6287.o pam_ocra/ocra.o pam_ocra/pam_ocra.o
-	${CC} ${LIB_LDFLAGS} -o $@ $^
+	${CC} -o $@ $^ ${LIB_LDFLAGS}
