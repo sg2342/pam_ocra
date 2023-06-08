@@ -47,6 +47,15 @@
 
 #include "rfc6287.h"
 
+typedef struct hmac_ctx_struct {
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+	HMAC_CTX *ctx;
+#else
+	EVP_MAC_CTX *ctx;
+	EVP_MAC	*mac;
+#endif
+} hmac_ctx;
+
 size_t
 mdlen(enum alg A)
 {
@@ -355,30 +364,85 @@ st64be(uint8_t *p, uint64_t x)
 	memcpy(p, &y, sizeof(y));
 }
 
+
 static int
-hmac_new(HMAC_CTX ** ctx)
+hmac_new(hmac_ctx *ctx, size_t key_l, const uint8_t *key, enum alg A)
 {
+	ctx->ctx = NULL;
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || \
     OPENSSL_VERSION_NUMBER == 0x20000000L
-	if (NULL == (*ctx = (HMAC_CTX *) malloc(sizeof(HMAC_CTX))))
+	if (NULL == (ctx->ctx = (hmac_ctx *) malloc(sizeof(hmac_ctx))))
 		return RFC6287_ERR_POSIX;
 	HMAC_CTX_init(*ctx);
+	if (1 != HMAC_Init_ex(ctx->ctx, key, key_l, evp_md(A), NULL))
+		return RFC6287_ERR_OPENSSL;
+#elif OPENSSL_VERSION_NUMBER < 0x30000000L
+	if (NULL == (ctx->ctx = HMAC_CTX_new()))
+		return RFC6287_ERR_OPENSSL;
+	if (1 != HMAC_Init_ex(ctx->ctx, key, key_l, evp_md(A), NULL))
+		return RFC6287_ERR_OPENSSL;
 #else
-	if (NULL == (*ctx = HMAC_CTX_new()))
+	OSSL_PARAM p[2];
+	ctx->mac = NULL;
+	char buf[7];
+
+	switch (A) {
+	case sha1:
+		strcpy(buf, "SHA1");
+		break;
+	case sha256:
+		strcpy(buf, "SHA256");
+		break;
+	case sha512:
+		strcpy(buf, "SHA512");
+		break;
+	default:
+		return RFC6287_ERR_OPENSSL;
+	}
+
+	p[0] = OSSL_PARAM_construct_utf8_string("digest", buf, strlen(buf));
+	p[1] = OSSL_PARAM_construct_end();
+	ctx->mac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+	if (NULL == (ctx->ctx = EVP_MAC_CTX_new(ctx->mac)))
+		return RFC6287_ERR_OPENSSL;
+	if (1 != EVP_MAC_init(ctx->ctx, key, key_l, p))
 		return RFC6287_ERR_OPENSSL;
 #endif
 	return 0;
 }
 
 static void
-hmac_destroy(HMAC_CTX * ctx)
+hmac_destroy(hmac_ctx ctx)
 {
 #if OPENSSL_VERSION_NUMBER < 0x10100000L || \
     OPENSSL_VERSION_NUMBER == 0x20000000L
-	HMAC_CTX_cleanup(ctx);
-	free(ctx);
+	HMAC_CTX_cleanup(ctx.ctx);
+	free(ctx.ctx);
+#elif OPENSSL_VERSION_NUMBER < 0x30000000L
+	HMAC_CTX_free(ctx.ctx);
 #else
-	HMAC_CTX_free(ctx);
+	EVP_MAC_CTX_free(ctx.ctx);
+	EVP_MAC_free(ctx.mac);
+#endif
+}
+
+static int
+hmac_update(hmac_ctx ctx, const uint8_t *data, size_t data_l)
+{
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+	return HMAC_Update(ctx.ctx, data, data_l);
+#else
+	return EVP_MAC_update(ctx.ctx, data, data_l);
+#endif
+}
+
+static int
+hmac_final(hmac_ctx ctx, uint8_t *mac, unsigned int *mac_l)
+{
+#if OPENSSL_VERSION_NUMBER < 0x30000000L
+	return HMAC_Final(ctx.ctx, mac, mac_l);
+#else
+	return EVP_MAC_final(ctx.ctx, mac, (size_t *)mac_l, *mac_l);
 #endif
 }
 
@@ -387,20 +451,21 @@ verify(const ocra_suite * ocra, const uint8_t *key, size_t key_l,
     const uint8_t *buf, size_t buf_l, const char *resp)
 {
 	int ret;
-	unsigned int md_l = 20;
+	unsigned int md_l;
 	uint8_t *md = NULL;
 	char *tmp;
-	HMAC_CTX *ctx = NULL;
+	hmac_ctx ctx;
 
-	if (0 != (ret = hmac_new(&ctx)))
-		return ret;
+	md_l = mdlen(ocra->hotp_alg);
 
-	if (NULL == ((md = (uint8_t *)malloc(mdlen(ocra->hotp_alg)))))
+	if (NULL == (md = (uint8_t *)malloc(md_l)))
 		return RFC6287_ERR_POSIX;
 
-	if ((1 != HMAC_Init_ex(ctx, key, key_l, evp_md(ocra->hotp_alg), NULL)) ||
-	    (1 != HMAC_Update(ctx, buf, (int)buf_l)) ||
-	    (1 != HMAC_Final(ctx, md, &md_l)) ||
+	if (0 != (ret = hmac_new(&ctx, key_l, key, ocra->hotp_alg)))
+		return ret;
+
+	if ((1 != hmac_update(ctx, buf, (int)buf_l)) ||
+	    (1 != hmac_final(ctx, md, &md_l)) ||
 	    (md_l != mdlen(ocra->hotp_alg))) {
 		hmac_destroy(ctx);
 		free(md);
@@ -492,10 +557,10 @@ rfc6287_ocra(const ocra_suite * ocra, const char *suite_string,
 	uint8_t CBE[8];
 	uint8_t TBE[8];
 	uint8_t *md = NULL;
-	unsigned int md_l = 20;
+	unsigned int md_l;
 	int suite_l = strlen(suite_string) + 1;
 	int flags = ocra->flags;
-	HMAC_CTX *ctx;
+	hmac_ctx ctx;
 
 	if ((0 != (ret = check_di_params(ocra, key_l, Q, P_l, S_l, T))) ||
 	    (0 != (ret = format_questions(ocra, qbuf, Q))))
@@ -506,22 +571,22 @@ rfc6287_ocra(const ocra_suite * ocra, const char *suite_string,
 	if (flags & FL_T)
 		st64be(TBE, T);
 
-	if (0 != (ret = hmac_new(&ctx)))
-		return ret;
-
-	if (NULL == (md = (uint8_t *)malloc(mdlen(ocra->hotp_alg))))
+	md_l = mdlen(ocra->hotp_alg);
+	if (NULL == (md = (uint8_t *)malloc(md_l)))
 		return RFC6287_ERR_POSIX;
 
-	if ((1 != HMAC_Init_ex(ctx, key, key_l, evp_md(ocra->hotp_alg), NULL)) ||
-	    (1 !=
-	    HMAC_Update(ctx, (const uint8_t *)suite_string, suite_l)) ||
-	    ((flags & FL_C) && (1 != HMAC_Update(ctx, CBE, 8))) ||
-	    (1 != HMAC_Update(ctx, qbuf, 128)) ||
-	    ((flags & FL_P) && (1 != HMAC_Update(ctx, P, P_l))) ||
-	    ((flags & FL_S) && (1 != HMAC_Update(ctx, S, S_l))) ||
-	    ((flags & FL_T) && (1 != HMAC_Update(ctx, TBE, 8))) ||
-	    (NULL == (md = (uint8_t *)malloc(mdlen(ocra->hotp_alg)))) ||
-	    (1 != HMAC_Final(ctx, md, &md_l)) ||
+	if (0 != (ret = hmac_new(&ctx, key_l, key, ocra->hotp_alg)))
+		return ret;
+
+	if ((1 !=
+	    hmac_update(ctx, (const uint8_t *)suite_string, suite_l)) ||
+	    ((flags & FL_C) && (1 != hmac_update(ctx, CBE, 8))) ||
+	    (1 != hmac_update(ctx, qbuf, 128)) ||
+	    ((flags & FL_P) && (1 != hmac_update(ctx, P, P_l))) ||
+	    ((flags & FL_S) && (1 != hmac_update(ctx, S, S_l))) ||
+	    ((flags & FL_T) && (1 != hmac_update(ctx, TBE, 8))) ||
+	    (NULL == (md = (uint8_t *)malloc(md_l))) ||
+	    (1 != hmac_final(ctx, md, &md_l)) ||
 	    (md_l != mdlen(ocra->hotp_alg))) {
 		hmac_destroy(ctx);
 		free(md);
